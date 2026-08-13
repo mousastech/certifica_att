@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { Activity, LogIn, Users, Download, Loader2 } from 'lucide-react'
 import { getAdminActivity, getAdminActivityCsv } from '@/services/api'
 import { downloadBlob } from '@/lib/export'
+import Pagination, { usePaged } from '@/components/Pagination'
 import { useT, useI18n } from '@/i18n'
 import type { ActivityEvent } from '@/types'
 import './History.css'
@@ -55,6 +56,10 @@ export default function AdminActivity() {
       limit: 500,
     }),
   })
+
+  const paged = usePaged(data?.events ?? [], 50)
+  // volta à página 1 quando muda um filtro
+  useEffect(() => { paged.setPage(1) }, [action, email])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const fmt = (s?: string | null) => s ? new Date(s).toLocaleString(LOCALE[lang]) : '—'
 
@@ -118,7 +123,7 @@ export default function AdminActivity() {
               </tr>
             </thead>
             <tbody>
-              {data.events.map((e: ActivityEvent) => (
+              {paged.pageItems.map((e: ActivityEvent) => (
                 <tr key={e.id}>
                   <td>{fmt(e.created_at)}</td>
                   <td>
@@ -132,6 +137,8 @@ export default function AdminActivity() {
               ))}
             </tbody>
           </table>
+          <Pagination page={paged.page} totalPages={paged.totalPages} from={paged.from}
+            to={paged.to} total={paged.total} onPage={paged.setPage} />
         </div>
       )}
     </div>

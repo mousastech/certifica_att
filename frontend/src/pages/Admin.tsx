@@ -12,6 +12,7 @@ import {
   getMyTracks, getCertifications, adminGetMembership, adminBulkGroup,
 } from '@/services/api'
 import type { BulkResult } from '@/types'
+import Pagination, { usePaged } from '@/components/Pagination'
 import { useT, useI18n } from '@/i18n'
 import { useAuth } from '@/context/AuthContext'
 import type { AdminUserRow } from '@/types'
@@ -394,6 +395,7 @@ export default function Admin() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); setSelected(new Set()); setBulkErr(null) },
     onError: (e: any) => setBulkErr(e?.response?.data?.detail ?? t('admin.assignError')),
   })
+  const paged = usePaged(data?.users ?? [], 50)
   const runBulkAssign = () => {
     // Sin grupo = quitar el grupo a todos los seleccionados: confirmamos para evitar borrado accidental.
     if (!bulkGroup && !confirm(t('admin.confirmClearGroup', { n: selected.size }))) return
@@ -472,7 +474,7 @@ export default function Admin() {
             </tr>
           </thead>
           <tbody>
-            {data.users.map(u => (
+            {paged.pageItems.map(u => (
               <tr key={u.email}
                   className={u.attempts > 0 ? 'adm-row-click' : ''}
                   onClick={() => u.attempts > 0 && navigate(`/admin/user/${encodeURIComponent(u.email)}`)}
@@ -512,6 +514,8 @@ export default function Admin() {
             ))}
           </tbody>
         </table>
+        <Pagination page={paged.page} totalPages={paged.totalPages} from={paged.from}
+          to={paged.to} total={paged.total} onPage={paged.setPage} />
       </div>
 
       {editing && <EditModal key={editing.email} user={editing} onClose={() => setEditing(null)} />}

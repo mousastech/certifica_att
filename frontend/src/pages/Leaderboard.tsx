@@ -7,6 +7,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { getMyGamification, getGamiLeaderboard } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
+import Pagination, { usePaged } from '@/components/Pagination'
 import { useT } from '@/i18n'
 
 const BADGE_ICON: Record<string, LucideIcon> = {
@@ -23,6 +24,8 @@ export default function Leaderboard() {
     queryKey: ['gami-lb', scope], queryFn: () => getGamiLeaderboard(scope),
   })
   const groupName = (key?: string) => lb?.groups.find(g => g.key === key)?.name || key || '—'
+  const rows = lb?.rows ?? []
+  const paged = usePaged(rows, 50)
 
   const pct = gami && gami.next_level_at
     ? Math.min(100, Math.round(100 * (gami.points - gami.level_floor) / (gami.next_level_at - gami.level_floor)))
@@ -113,7 +116,7 @@ export default function Leaderboard() {
               </tr>
             </thead>
             <tbody>
-              {(lb?.rows ?? []).map(r => {
+              {paged.pageItems.map(r => {
                 const me = r.email === user?.email
                 return (
                   <tr key={r.email} style={{
@@ -132,13 +135,15 @@ export default function Leaderboard() {
                   </tr>
                 )
               })}
-              {(lb?.rows?.length ?? 0) === 0 && (
+              {rows.length === 0 && (
                 <tr><td colSpan={5} className="muted" style={{ padding: 20, textAlign: 'center' }}>
                   {t('gami.empty')}
                 </td></tr>
               )}
             </tbody>
           </table>
+          <Pagination page={paged.page} totalPages={paged.totalPages} from={paged.from}
+            to={paged.to} total={paged.total} onPage={paged.setPage} />
         </div>
       )}
     </div>

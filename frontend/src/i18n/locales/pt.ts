@@ -4,6 +4,8 @@ export const pt: Dict = {
   common: {
     enter: 'Entrar', createAccount: 'Criar conta', wait: 'Aguarde…',
     back: '← Voltar', loading: 'Carregando…',
+    prev: 'Anterior', next: 'Próxima',
+    pageOf: 'Página {p} de {n}', showing: 'Mostrando {a}–{b} de {total}',
   },
   nav: {
     program: 'Programa', routes: 'Trilhas', simulacros: 'Simulados',

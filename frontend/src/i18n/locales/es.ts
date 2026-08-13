@@ -2,6 +2,8 @@ export const es = {
   common: {
     enter: 'Entrar', createAccount: 'Crear cuenta', wait: 'Espera…',
     back: '← Volver', loading: 'Cargando…',
+    prev: 'Anterior', next: 'Siguiente',
+    pageOf: 'Página {p} de {n}', showing: 'Mostrando {a}–{b} de {total}',
   },
   nav: {
     program: 'Programa', routes: 'Rutas', simulacros: 'Simulacros',
