@@ -219,6 +219,10 @@ export const adminDeleteGroup = (key: string): Promise<any> =>
 // Admin — vínculo usuário↔grupo
 export const adminSetUserGroup = (email: string, body: { group_key?: string | null; extra_track_keys?: string[] }): Promise<any> =>
   api.patch(`/admin/users/${encodeURIComponent(email)}/group`, body).then(r => r.data)
+export const adminGetMembership = (email: string): Promise<{ group_key: string | null; extra_track_keys: string[] }> =>
+  api.get(`/admin/users/${encodeURIComponent(email)}/membership`).then(r => r.data)
+export const adminBulkGroup = (emails: string[], group_key: string | null): Promise<{ ok: boolean; updated: number }> =>
+  api.post('/admin/users/bulk-group', { emails, group_key }).then(r => r.data)
 
 // Admin — carga em lote
 export const adminBulkUsers = (fileData: File, defaultPassword?: string): Promise<BulkResult> => {

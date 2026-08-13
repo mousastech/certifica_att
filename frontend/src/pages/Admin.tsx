@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -9,7 +9,7 @@ import {
   getAdminOverview, adminCreateUser, adminUpdateUser, adminSetUserStatus,
   adminSetUserPassword, adminDeleteUser, adminInvite,
   adminBulkUsers, getUsersTemplate, adminListGroups, adminSetUserGroup,
-  getMyTracks, getCertifications,
+  getMyTracks, getCertifications, adminGetMembership, adminBulkGroup,
 } from '@/services/api'
 import type { BulkResult } from '@/types'
 import { useT, useI18n } from '@/i18n'
@@ -94,9 +94,18 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
   const { data: groups } = useQuery({ queryKey: ['adm-groups'], queryFn: adminListGroups })
   const { data: mine } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
   const { data: certs } = useQuery({ queryKey: ['certs'], queryFn: getCertifications })
+  const { data: membership } = useQuery({ queryKey: ['membership', user.email], queryFn: () => adminGetMembership(user.email) })
+  const [extra, setExtra] = useState<string[]>([])
+  useEffect(() => {
+    if (membership) {
+      setExtra(membership.extra_track_keys || [])
+      if (membership.group_key != null) setGroupKey(membership.group_key || '')
+    }
+  }, [membership])
   const selGroup = groups?.find(g => g.key === groupKey)
   const trackName = (k: string) => mine?.tracks.find(tr => tr.key === k)?.name || k
   const certName = (id: string) => certs?.find(c => c.id === id)?.name || id
+  const toggleExtra = (k: string) => setExtra(x => x.includes(k) ? x.filter(v => v !== k) : [...x, k])
 
   const save = useMutation({
     mutationFn: async () => {
@@ -104,8 +113,10 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         name: name.trim(), area: area.trim(),
         ...(isAdmin !== user.is_admin ? { is_admin: isAdmin } : {}),
       })
-      if ((groupKey || '') !== (user.group_key || ''))
-        await adminSetUserGroup(user.email, { group_key: groupKey || null })
+      const groupChanged = (groupKey || '') !== (membership?.group_key || '')
+      const extraChanged = JSON.stringify([...extra].sort()) !== JSON.stringify([...(membership?.extra_track_keys || [])].sort())
+      if (groupChanged || extraChanged)
+        await adminSetUserGroup(user.email, { group_key: groupKey || null, extra_track_keys: extra })
       if (pw) await adminSetUserPassword(user.email, pw)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); onClose() },
@@ -148,6 +159,18 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
             )}
           </div>
         )}
+        <div style={{ marginTop: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{t('admin.extraTracks')}</div>
+          <p className="muted" style={{ fontSize: 12, margin: '2px 0 6px' }}>{t('admin.extraTracksHint')}</p>
+          <div style={{ display: 'grid', gap: 5, maxHeight: 150, overflow: 'auto' }}>
+            {(mine?.tracks ?? []).map(tr => (
+              <label key={tr.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                <input type="checkbox" checked={extra.includes(tr.key!)} onChange={() => toggleExtra(tr.key!)} style={{ width: 'auto' }} />
+                {tr.name}
+              </label>
+            ))}
+          </div>
+        </div>
         <label>{t('admin.newPassword')}<input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••" /></label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
           <input type="checkbox" checked={isAdmin} disabled={isSelf}
@@ -257,6 +280,7 @@ function NewUserModal({ onClose }: { onClose: () => void }) {
 
 function BulkImportModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
+  const t = useT()
   const [file, setFile] = useState<File | null>(null)
   const [pw, setPw] = useState('Databricks#ATT2026')
   const [result, setResult] = useState<BulkResult | null>(null)
@@ -279,50 +303,46 @@ function BulkImportModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card card" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
-        <h3><Upload size={18} style={{ verticalAlign: -3 }} /> Importar usuários em lote</h3>
-        <p className="muted" style={{ marginBottom: 12 }}>
-          Planilha com colunas <b>nome, email, area, grupo</b> (CSV ou XLSX). O campo
-          <b> grupo</b> aceita a chave ou o nome de uma área. Novos usuários recebem a
-          senha inicial abaixo (troca no 1º acesso).
-        </p>
+        <h3><Upload size={18} style={{ verticalAlign: -3 }} /> {t('bulk.title')}</h3>
+        <p className="muted" style={{ marginBottom: 12 }}>{t('bulk.desc')}</p>
 
         {result ? (
           <>
             <div className="card" style={{ padding: 14, marginBottom: 12 }}>
               <div style={{ display: 'flex', gap: 20 }}>
-                <div><b style={{ fontSize: 22 }}>{result.created}</b><div className="muted" style={{ fontSize: 12 }}>criados</div></div>
-                <div><b style={{ fontSize: 22 }}>{result.updated}</b><div className="muted" style={{ fontSize: 12 }}>atualizados</div></div>
-                <div><b style={{ fontSize: 22 }}>{result.total}</b><div className="muted" style={{ fontSize: 12 }}>linhas</div></div>
-                <div><b style={{ fontSize: 22, color: result.errors.length ? 'var(--brand-error)' : undefined }}>{result.errors.length}</b><div className="muted" style={{ fontSize: 12 }}>erros</div></div>
+                <div><b style={{ fontSize: 22 }}>{result.created}</b><div className="muted" style={{ fontSize: 12 }}>{t('bulk.created')}</div></div>
+                <div><b style={{ fontSize: 22 }}>{result.updated}</b><div className="muted" style={{ fontSize: 12 }}>{t('bulk.updated')}</div></div>
+                <div><b style={{ fontSize: 22 }}>{result.total}</b><div className="muted" style={{ fontSize: 12 }}>{t('bulk.rows')}</div></div>
+                <div><b style={{ fontSize: 22, color: result.errors.length ? 'var(--brand-error)' : undefined }}>{result.errors.length}</b><div className="muted" style={{ fontSize: 12 }}>{t('bulk.errors')}</div></div>
               </div>
             </div>
             {result.errors.length > 0 && (
               <div style={{ maxHeight: 160, overflow: 'auto', fontSize: 12 }} className="login-error">
-                {result.errors.map((e, i) => <div key={i}>Linha {e.row} ({e.email || '—'}): {e.error}</div>)}
+                {result.errors.map((e, i) => <div key={i}>{t('bulk.line')} {e.row} ({e.email || '—'}): {e.error}</div>)}
               </div>
             )}
-            <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>Senha inicial: <code>{result.default_password}</code></p>
+            <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t('bulk.initialPassword')}: <code>{result.default_password}</code></p>
             <div className="modal-actions">
-              <button className="btn btn-primary" onClick={onClose}>Concluir</button>
+              <button className="btn btn-primary" onClick={onClose}>{t('bulk.done')}</button>
             </div>
           </>
         ) : (
           <>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <button className="btn" onClick={() => dl('csv')}><Download size={14} /> Modelo CSV</button>
-              <button className="btn" onClick={() => dl('xlsx')}><FileSpreadsheet size={14} /> Modelo XLSX</button>
+              <button className="btn" onClick={() => dl('csv')}><Download size={14} /> {t('bulk.modelCsv')}</button>
+              <button className="btn" onClick={() => dl('xlsx')}><FileSpreadsheet size={14} /> {t('bulk.modelXlsx')}</button>
             </div>
-            <label>Arquivo (.csv / .xlsx)
+            <label>{t('bulk.file')}
               <input type="file" accept=".csv,.xlsx" onChange={e => setFile(e.target.files?.[0] ?? null)} />
             </label>
-            <label>Senha inicial dos novos usuários
+            <label>{t('bulk.initPassword')}
               <input value={pw} onChange={e => setPw(e.target.value)} />
             </label>
             {err && <div className="login-error">{err}</div>}
             <div className="modal-actions">
-              <button className="btn" onClick={onClose}>Cancelar</button>
+              <button className="btn" onClick={onClose}>{t('bulk.cancel')}</button>
               <button className="btn btn-primary" disabled={!file || run.isPending} onClick={() => { setErr(null); run.mutate() }}>
-                {run.isPending ? <Loader2 size={15} className="spinning" /> : <>Importar</>}
+                {run.isPending ? <Loader2 size={15} className="spinning" /> : <>{t('bulk.import')}</>}
               </button>
             </div>
           </>
@@ -352,6 +372,17 @@ export default function Admin() {
   const del = useMutation({
     mutationFn: (email: string) => adminDeleteUser(email),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-overview'] }),
+  })
+
+  // seleção em lote → atribuição de grupo
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkGroup, setBulkGroup] = useState('')
+  const toggleSel = (email: string) => setSelected(s => {
+    const n = new Set(s); n.has(email) ? n.delete(email) : n.add(email); return n
+  })
+  const bulkAssign = useMutation({
+    mutationFn: () => adminBulkGroup([...selected], bulkGroup || null),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); setSelected(new Set()) },
   })
 
   if (isLoading) return <div className="spinner" />
@@ -398,10 +429,31 @@ export default function Admin() {
 
       <EngagementDashboard users={data.users} passMark={data.pass_mark} />
 
+      {selected.size > 0 && (
+        <div className="card" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 14px', marginBottom: 10 }}>
+          <b>{t('admin.selectedN', { n: selected.size })}</b>
+          <select value={bulkGroup} onChange={e => setBulkGroup(e.target.value)} style={{ maxWidth: 240 }}>
+            <option value="">{t('admin.noGroup')}</option>
+            {(groups ?? []).map(g => <option key={g.key} value={g.key}>{g.name}</option>)}
+          </select>
+          <button className="btn btn-primary" disabled={bulkAssign.isPending} onClick={() => bulkAssign.mutate()}>
+            {bulkAssign.isPending ? <><Loader2 size={14} className="spinning" /> {t('admin.assigning')}</> : <><Users2 size={15} /> {t('admin.assignGroup')}</>}
+          </button>
+          <button className="link-btn" onClick={() => setSelected(new Set())}>{t('admin.clearSel')}</button>
+        </div>
+      )}
+
       <div className="card hist-table-wrap">
         <table className="hist-table">
           <thead>
-            <tr><th>{t('admin.name')}</th><th>{t('admin.area')}</th><th>{t('admin.status')}</th><th>{t('admin.attempts')}</th><th>{t('admin.best')}</th><th>{t('admin.lastAccess')}</th><th>{t('admin.actions')}</th></tr>
+            <tr>
+              <th style={{ width: 34 }}>
+                <input type="checkbox"
+                  checked={data.users.length > 0 && selected.size === data.users.length}
+                  onChange={e => setSelected(e.target.checked ? new Set(data.users.map(u => u.email)) : new Set())} />
+              </th>
+              <th>{t('admin.name')}</th><th>{t('admin.area')}</th><th>{t('admin.status')}</th><th>{t('admin.attempts')}</th><th>{t('admin.best')}</th><th>{t('admin.lastAccess')}</th><th>{t('admin.actions')}</th>
+            </tr>
           </thead>
           <tbody>
             {data.users.map(u => (
@@ -409,6 +461,9 @@ export default function Admin() {
                   className={u.attempts > 0 ? 'adm-row-click' : ''}
                   onClick={() => u.attempts > 0 && navigate(`/admin/user/${encodeURIComponent(u.email)}`)}
                   title={u.attempts > 0 ? t('admin.viewAttempts') : t('admin.noAttempts')}>
+                <td onClick={stop}>
+                  <input type="checkbox" checked={selected.has(u.email)} onChange={() => toggleSel(u.email)} />
+                </td>
                 <td>
                   <b>{u.name}</b>{u.is_admin && <span className="badge badge-associate" style={{ marginLeft: 6 }}>{t('admin.roleAdmin')}</span>}
                   <div className="muted" style={{ fontSize: 12 }}>{u.email}</div>

@@ -68,6 +68,11 @@ class UserGroupBody(BaseModel):
     extra_track_keys: Optional[List[str]] = None
 
 
+class BulkGroupBody(BaseModel):
+    emails: List[str] = []
+    group_key: Optional[str] = None
+
+
 # ── Trainee ────────────────────────────────────────────────────────────────────
 @router.get("/me/tracks")
 async def my_tracks(user: UserPublic = Depends(security.get_current_user)):
@@ -164,6 +169,32 @@ async def admin_delete_group(key: str, admin: UserPublic = Depends(security.requ
 
 
 # ── Admin: vínculo usuário ↔ grupo ────────────────────────────────────────────────
+@router.get("/admin/users/{email}/membership")
+async def admin_user_membership(email: str, admin: UserPublic = Depends(security.require_admin)):
+    """group_key + extra_track_keys de um usuário (para o modal de edição)."""
+    if not users_svc.get_user(admin.tenant_id, email.lower()):
+        raise HTTPException(404, "Usuário não encontrado")
+    return groups_svc.get_user_membership(admin.tenant_id, email.lower())
+
+
+@router.post("/admin/users/bulk-group")
+async def admin_bulk_group(body: BulkGroupBody, request: Request,
+                           admin: UserPublic = Depends(security.require_admin)):
+    """Atribui um grupo a vários usuários de uma vez (seleção na tabela)."""
+    gk = (body.group_key or "").strip().lower() or None
+    if gk and not groups_svc.get_group(admin.tenant_id, gk):
+        raise HTTPException(422, f"Grupo '{gk}' inexistente")
+    n = 0
+    for email in body.emails:
+        e = email.lower()
+        if users_svc.get_user(admin.tenant_id, e):
+            groups_svc.set_user_group(admin.tenant_id, e, gk)
+            n += 1
+    activity.log_event(admin.tenant_id, admin.email, "bulk_group", request=request,
+                       detail={"group": gk, "count": n})
+    return {"ok": True, "updated": n}
+
+
 @router.patch("/admin/users/{email}/group")
 async def admin_set_user_group(email: str, body: UserGroupBody,
                                admin: UserPublic = Depends(security.require_admin)):

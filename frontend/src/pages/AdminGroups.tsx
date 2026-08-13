@@ -6,6 +6,7 @@ import {
   adminListGroups, adminCreateGroup, adminUpdateGroup, adminDeleteGroup,
   getMyTracks, getCertifications,
 } from '@/services/api'
+import { useT } from '@/i18n'
 import type { Group } from '@/types'
 
 const EMPTY: Partial<Group> = {
@@ -15,6 +16,7 @@ const EMPTY: Partial<Group> = {
 
 export default function AdminGroups() {
   const qc = useQueryClient()
+  const t = useT()
   const { data: groups, isLoading } = useQuery({ queryKey: ['adm-groups'], queryFn: adminListGroups })
   const { data: mine } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
   const { data: certs } = useQuery({ queryKey: ['certs'], queryFn: getCertifications })
@@ -44,13 +46,13 @@ export default function AdminGroups() {
     <div>
       <div className="au-title-row">
         <div>
-          <h1 className="hist-title"><Users2 size={20} style={{ verticalAlign: -3 }} /> Grupos & Atribuição de Trilhas</h1>
-          <p className="muted hist-sub">Defina as áreas/personas da AT&T e quais trilhas e simulados cada uma enxerga.</p>
+          <h1 className="hist-title"><Users2 size={20} style={{ verticalAlign: -3 }} /> {t('gadmin.title')}</h1>
+          <p className="muted hist-sub">{t('gadmin.sub')}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link className="btn" to="/admin">← Admin</Link>
+          <Link className="btn" to="/admin">{t('gadmin.back')}</Link>
           <button className="btn btn-primary" onClick={() => { setEditing({ ...EMPTY }); setIsNew(true) }}>
-            <Plus size={15} /> Novo grupo
+            <Plus size={15} /> {t('gadmin.newGroup')}
           </button>
         </div>
       </div>
@@ -62,21 +64,21 @@ export default function AdminGroups() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                 <h4 style={{ margin: 0 }}>{g.name}</h4>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button className="link-btn" title="Editar" onClick={() => { setEditing({ ...g }); setIsNew(false) }}><Pencil size={15} /></button>
-                  <button className="link-btn" title="Excluir" onClick={() => { if (confirm(`Excluir o grupo "${g.name}"?`)) del.mutate(g.key) }}><Trash2 size={15} /></button>
+                  <button className="link-btn" title={t('gadmin.editGroup')} onClick={() => { setEditing({ ...g }); setIsNew(false) }}><Pencil size={15} /></button>
+                  <button className="link-btn" title={t('gadmin.deleteTip')} onClick={() => { if (confirm(t('gadmin.confirmDelete', { name: g.name }))) del.mutate(g.key) }}><Trash2 size={15} /></button>
                 </div>
               </div>
               <p className="muted" style={{ fontSize: 13 }}>{g.description}</p>
               <div style={{ marginTop: 8 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}><Layers size={13} /> Trilhas ({g.track_keys.length || 'todas'})</div>
+                <div style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}><Layers size={13} /> {t('gadmin.visibleTracks')} ({g.track_keys.length || '∞'})</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
-                  {g.track_keys.length === 0 ? <span className="muted" style={{ fontSize: 12 }}>Todas as trilhas</span>
+                  {g.track_keys.length === 0 ? <span className="muted" style={{ fontSize: 12 }}>{t('gadmin.allTracks')}</span>
                     : g.track_keys.map(k => <span key={k} className="badge badge-fundamentos" style={{ fontSize: 11 }}>{trackName(k)}</span>)}
                 </div>
               </div>
               {g.certification_ids.length > 0 && (
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}><ClipboardList size={13} /> Simulados</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}><ClipboardList size={13} /> {t('gadmin.sims')}</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
                     {g.certification_ids.map(id => <span key={id} className="badge badge-associate" style={{ fontSize: 11 }}>{certName(id)}</span>)}
                   </div>
@@ -93,46 +95,46 @@ export default function AdminGroups() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
           <div className="card" onClick={e => e.stopPropagation()} style={{ maxWidth: 560, width: '100%', maxHeight: '90vh', overflow: 'auto', padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0 }}>{isNew ? 'Novo grupo' : `Editar: ${editing.name}`}</h3>
+              <h3 style={{ margin: 0 }}>{isNew ? t('gadmin.newGroup') : `${t('gadmin.editGroup')}: ${editing.name}`}</h3>
               <button className="link-btn" onClick={() => setEditing(null)}><X size={18} /></button>
             </div>
 
             <div style={{ display: 'grid', gap: 12 }}>
-              <label>Nome
+              <label>{t('gadmin.name')}
                 <input value={editing.name || ''} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="Oficina del CDO" />
               </label>
               {isNew && (
-                <label>Chave (key)
-                  <input value={editing.key || ''} onChange={e => setEditing({ ...editing, key: e.target.value })} placeholder="cdo (opcional — gerada do nome)" />
+                <label>{t('gadmin.keyField')}
+                  <input value={editing.key || ''} onChange={e => setEditing({ ...editing, key: e.target.value })} placeholder={t('gadmin.keyHint')} />
                 </label>
               )}
-              <label>Descrição
+              <label>{t('gadmin.description')}
                 <input value={editing.description || ''} onChange={e => setEditing({ ...editing, description: e.target.value })} />
               </label>
               <div style={{ display: 'flex', gap: 12 }}>
-                <label style={{ flex: '0 0 110px' }}>Cor
+                <label style={{ flex: '0 0 110px' }}>{t('gadmin.color')}
                   <input type="color" value={editing.color || '#00A8E0'} onChange={e => setEditing({ ...editing, color: e.target.value })} style={{ height: 38, padding: 2 }} />
                 </label>
-                <label style={{ flex: 1 }}>Ícone (lucide)
+                <label style={{ flex: 1 }}>{t('gadmin.icon')}
                   <input value={editing.icon || ''} onChange={e => setEditing({ ...editing, icon: e.target.value })} placeholder="Building2" />
                 </label>
               </div>
 
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Trilhas visíveis <span className="muted" style={{ fontWeight: 400 }}>(nenhuma = todas)</span></div>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{t('gadmin.visibleTracks')} <span className="muted" style={{ fontWeight: 400 }}>{t('gadmin.visibleTracksHint')}</span></div>
                 <div style={{ display: 'grid', gap: 6 }}>
-                  {tracks.map(t => (
-                    <label key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', fontWeight: 400 }}>
-                      <input type="checkbox" checked={(editing.track_keys || []).includes(t.key!)}
-                        onChange={() => setEditing({ ...editing, track_keys: toggle(editing.track_keys || [], t.key!) })} />
-                      {t.name}
+                  {tracks.map(tr => (
+                    <label key={tr.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', fontWeight: 400 }}>
+                      <input type="checkbox" checked={(editing.track_keys || []).includes(tr.key!)}
+                        onChange={() => setEditing({ ...editing, track_keys: toggle(editing.track_keys || [], tr.key!) })} />
+                      {tr.name}
                     </label>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Simulados extras <span className="muted" style={{ fontWeight: 400 }}>(opcional; senão derivado das trilhas)</span></div>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{t('gadmin.extraSims')} <span className="muted" style={{ fontWeight: 400 }}>{t('gadmin.extraSimsHint')}</span></div>
                 <div style={{ display: 'grid', gap: 6 }}>
                   {(certs ?? []).map(c => (
                     <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', fontWeight: 400 }}>
@@ -144,10 +146,10 @@ export default function AdminGroups() {
                 </div>
               </div>
 
-              {save.isError && <div className="login-error">Erro ao salvar. Verifique os campos (chave única?).</div>}
+              {save.isError && <div className="login-error">{t('gadmin.errSave')}</div>}
               <button className="btn btn-primary btn-lg" disabled={save.isPending || !editing.name}
                 onClick={() => save.mutate(editing)}>
-                <Check size={16} /> {save.isPending ? 'Salvando…' : 'Salvar grupo'}
+                <Check size={16} /> {save.isPending ? t('gadmin.saving') : t('gadmin.save')}
               </button>
             </div>
           </div>
