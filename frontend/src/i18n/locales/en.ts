@@ -220,4 +220,17 @@ export const en: Dict = {
     done: 'Completed', markDone: 'Mark as completed', progress: 'Progress',
     free: 'Free', lvl_fundamentos: 'Fundamentals', lvl_associate: 'Associate · Intermediate', lvl_professional: 'Professional · Advanced', level: 'Level', target: 'Target certification',
   },
+  gami: {
+    title: 'Ranking & Gamification',
+    sub: 'Earn points by completing lessons in your tracks and taking practice tests. Level up and unlock badges.',
+    yourLevel: 'Your level', points: 'points', classes: 'lessons', sims: 'practice tests', approvals: 'passes',
+    toNext: '{n} points to the next level.',
+    tabAll: 'Overall', tabGroup: 'My area',
+    colName: 'Name', colArea: 'Area', colPoints: 'Points', colLevel: 'Level',
+    you: '(you)', empty: 'No activity yet. Start a track to earn points!',
+    myArea: 'Your area', tracksForYou: 'tracks assigned to you', pickTrack: 'Pick your track',
+    b_first_class: 'First lesson', b_five_classes: '5 lessons completed', b_fifteen_classes: '15 lessons completed',
+    b_first_sim: 'First practice test', b_ten_sims: '10 practice tests', b_first_pass: 'Practice test passed',
+    b_three_pass: '3 passes', b_advanced: 'Advanced level', b_master: 'Databricks Master',
+  },
 }

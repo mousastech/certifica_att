@@ -220,4 +220,17 @@ export const pt: Dict = {
     done: 'Concluída', markDone: 'Marcar como concluída', progress: 'Progresso',
     free: 'Grátis', lvl_fundamentos: 'Fundamentos', lvl_associate: 'Associado · Intermediário', lvl_professional: 'Profissional · Avançado', level: 'Nível', target: 'Certificação alvo',
   },
+  gami: {
+    title: 'Ranking & Gamificação',
+    sub: 'Pontue concluindo aulas das suas trilhas e fazendo simulados. Suba de nível e destrave medalhas.',
+    yourLevel: 'Seu nível', points: 'pontos', classes: 'aulas', sims: 'simulados', approvals: 'aprovações',
+    toNext: 'Faltam {n} pontos para o próximo nível.',
+    tabAll: 'Geral', tabGroup: 'Minha área',
+    colName: 'Nome', colArea: 'Área', colPoints: 'Pontos', colLevel: 'Nível',
+    you: '(você)', empty: 'Ainda sem atividade. Comece uma trilha para pontuar!',
+    myArea: 'Sua área', tracksForYou: 'trilhas atribuídas para você', pickTrack: 'Escolha sua trilha',
+    b_first_class: 'Primeira aula', b_five_classes: '5 aulas concluídas', b_fifteen_classes: '15 aulas concluídas',
+    b_first_sim: 'Primeiro simulado', b_ten_sims: '10 simulados', b_first_pass: 'Simulado aprovado',
+    b_three_pass: '3 aprovações', b_advanced: 'Nível Avançado', b_master: 'Mestre Databricks',
+  },
 }

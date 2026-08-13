@@ -7,6 +7,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { getMyGamification, getGamiLeaderboard } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
+import { useT } from '@/i18n'
 
 const BADGE_ICON: Record<string, LucideIcon> = {
   PlayCircle, BookOpen, GraduationCap, ClipboardCheck, Target,
@@ -15,6 +16,7 @@ const BADGE_ICON: Record<string, LucideIcon> = {
 
 export default function Leaderboard() {
   const { user } = useAuth()
+  const t = useT()
   const [scope, setScope] = useState<'all' | 'group'>('all')
   const { data: gami } = useQuery({ queryKey: ['gami'], queryFn: getMyGamification })
   const { data: lb, isLoading } = useQuery({
@@ -30,8 +32,8 @@ export default function Leaderboard() {
     <div>
       <div className="hist-title-row" style={{ marginBottom: 16 }}>
         <div>
-          <h1 className="hist-title"><Trophy size={20} style={{ verticalAlign: -3 }} /> Ranking & Gamificação</h1>
-          <p className="muted hist-sub">Pontue concluindo aulas das suas trilhas e fazendo simulados. Suba de nível e destrave medalhas.</p>
+          <h1 className="hist-title"><Trophy size={20} style={{ verticalAlign: -3 }} /> {t('gami.title')}</h1>
+          <p className="muted hist-sub">{t('gami.sub')}</p>
         </div>
       </div>
 
@@ -40,7 +42,7 @@ export default function Leaderboard() {
         <div className="card" style={{ padding: 22, marginBottom: 20 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, color: 'var(--brand-text-secondary)' }}>Seu nível</div>
+              <div style={{ fontSize: 13, color: 'var(--brand-text-secondary)' }}>{t('gami.yourLevel')}</div>
               <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--brand-primary)' }}>
                 <Star size={22} style={{ verticalAlign: -3 }} /> {gami.level}
               </div>
@@ -48,19 +50,19 @@ export default function Leaderboard() {
             <div style={{ display: 'flex', gap: 26 }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 800 }}>{gami.points}</div>
-                <div className="muted" style={{ fontSize: 12 }}>pontos</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t('gami.points')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 800 }}>{gami.classes_done}</div>
-                <div className="muted" style={{ fontSize: 12 }}>aulas</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t('gami.classes')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 800 }}>{gami.attempts}</div>
-                <div className="muted" style={{ fontSize: 12 }}>simulados</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t('gami.sims')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--brand-success)' }}>{gami.passed}</div>
-                <div className="muted" style={{ fontSize: 12 }}>aprovações</div>
+                <div className="muted" style={{ fontSize: 12 }}>{t('gami.approvals')}</div>
               </div>
             </div>
           </div>
@@ -69,7 +71,7 @@ export default function Leaderboard() {
             <div style={{ marginTop: 16 }}>
               <div className="prog-bar" style={{ height: 9 }}><div style={{ width: `${pct}%` }} /></div>
               <div className="muted" style={{ fontSize: 12, marginTop: 5 }}>
-                Faltam <b>{Math.max(0, gami.next_level_at - gami.points)}</b> pontos para o próximo nível.
+                {t('gami.toNext', { n: Math.max(0, gami.next_level_at - gami.points) })}
               </div>
             </div>
           )}
@@ -83,7 +85,7 @@ export default function Leaderboard() {
                     display: 'inline-flex', alignItems: 'center', gap: 7, padding: '7px 12px',
                     borderColor: 'var(--brand-primary)', fontSize: 13, fontWeight: 600,
                   }}>
-                    <Ico size={16} style={{ color: 'var(--brand-primary)' }} /> {b.name}
+                    <Ico size={16} style={{ color: 'var(--brand-primary)' }} /> {t(`gami.b_${b.key}`)}
                   </span>
                 )
               })}
@@ -94,8 +96,8 @@ export default function Leaderboard() {
 
       {/* Ranking */}
       <div className="login-tabs" style={{ maxWidth: 360, marginBottom: 14 }}>
-        <button className={scope === 'all' ? 'active' : ''} onClick={() => setScope('all')}>Geral</button>
-        <button className={scope === 'group' ? 'active' : ''} onClick={() => setScope('group')}>Minha área</button>
+        <button className={scope === 'all' ? 'active' : ''} onClick={() => setScope('all')}>{t('gami.tabAll')}</button>
+        <button className={scope === 'group' ? 'active' : ''} onClick={() => setScope('group')}>{t('gami.tabGroup')}</button>
       </div>
 
       {isLoading ? <div className="spinner" /> : (
@@ -104,10 +106,10 @@ export default function Leaderboard() {
             <thead>
               <tr style={{ textAlign: 'left', fontSize: 12, color: 'var(--brand-text-secondary)' }}>
                 <th style={{ padding: '10px 14px' }}>#</th>
-                <th style={{ padding: '10px 14px' }}>Nome</th>
-                <th style={{ padding: '10px 14px' }}>Área</th>
-                <th style={{ padding: '10px 14px', textAlign: 'right' }}>Pontos</th>
-                <th style={{ padding: '10px 14px', textAlign: 'right' }}>Nível</th>
+                <th style={{ padding: '10px 14px' }}>{t('gami.colName')}</th>
+                <th style={{ padding: '10px 14px' }}>{t('gami.colArea')}</th>
+                <th style={{ padding: '10px 14px', textAlign: 'right' }}>{t('gami.colPoints')}</th>
+                <th style={{ padding: '10px 14px', textAlign: 'right' }}>{t('gami.colLevel')}</th>
               </tr>
             </thead>
             <tbody>
@@ -121,7 +123,7 @@ export default function Leaderboard() {
                     <td style={{ padding: '10px 14px' }}>
                       {r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : r.rank}
                     </td>
-                    <td style={{ padding: '10px 14px' }}>{r.name}{me && ' (você)'}</td>
+                    <td style={{ padding: '10px 14px' }}>{r.name}{me && ` ${t('gami.you')}`}</td>
                     <td style={{ padding: '10px 14px' }} className="muted">{groupName(r.group_key)}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700 }}>{r.points}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right' }}>
@@ -132,7 +134,7 @@ export default function Leaderboard() {
               })}
               {(lb?.rows?.length ?? 0) === 0 && (
                 <tr><td colSpan={5} className="muted" style={{ padding: 20, textAlign: 'center' }}>
-                  Ainda sem atividade. Comece uma trilha para pontuar!
+                  {t('gami.empty')}
                 </td></tr>
               )}
             </tbody>

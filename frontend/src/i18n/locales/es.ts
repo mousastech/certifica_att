@@ -218,5 +218,18 @@ export const es = {
     done: 'Completada', markDone: 'Marcar como completada', progress: 'Progreso',
     free: 'Gratis', lvl_fundamentos: 'Fundamentos', lvl_associate: 'Asociado · Intermedio', lvl_professional: 'Profesional · Avanzado', level: 'Nivel', target: 'Certificación objetivo',
   },
+  gami: {
+    title: 'Ranking y Gamificación',
+    sub: 'Suma puntos completando clases de tus rutas y haciendo simulacros. Sube de nivel y desbloquea medallas.',
+    yourLevel: 'Tu nivel', points: 'puntos', classes: 'clases', sims: 'simulacros', approvals: 'aprobaciones',
+    toNext: 'Faltan {n} puntos para el próximo nivel.',
+    tabAll: 'General', tabGroup: 'Mi área',
+    colName: 'Nombre', colArea: 'Área', colPoints: 'Puntos', colLevel: 'Nivel',
+    you: '(tú)', empty: 'Aún sin actividad. ¡Empieza una ruta para sumar puntos!',
+    myArea: 'Tu área', tracksForYou: 'rutas asignadas para ti', pickTrack: 'Elige tu ruta',
+    b_first_class: 'Primera clase', b_five_classes: '5 clases completadas', b_fifteen_classes: '15 clases completadas',
+    b_first_sim: 'Primer simulacro', b_ten_sims: '10 simulacros', b_first_pass: 'Simulacro aprobado',
+    b_three_pass: '3 aprobaciones', b_advanced: 'Nivel Avanzado', b_master: 'Maestro Databricks',
+  },
 }
 export type Dict = typeof es

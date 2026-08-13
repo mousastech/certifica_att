@@ -45,7 +45,7 @@ export default function Routes() {
           <h1 className="hist-title"><Map size={20} style={{ verticalAlign: -3 }} /> {t('routes.title')}</h1>
           <p className="muted hist-sub">
             {group
-              ? <>Sua área: <b style={{ color: group.color || 'var(--brand-primary)' }}>{group.name}</b> · trilhas atribuídas para você</>
+              ? <>{t('gami.myArea')}: <b style={{ color: group.color || 'var(--brand-primary)' }}>{group.name}</b> · {t('gami.tracksForYou')}</>
               : t('routes.pick')}
           </p>
         </div>
