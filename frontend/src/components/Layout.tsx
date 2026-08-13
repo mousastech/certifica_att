@@ -73,10 +73,13 @@ export default function Layout() {
       </main>
 
       <footer className="gc-footer">
-        <div className="gc-disclaimer">
-          <span className="gc-disclaimer-tag">{t('nav.disclaimerTag')}</span>
-          <p>{t('nav.disclaimer')}</p>
-        </div>
+        {/* Disclaimer de simulados: solo en la página de simulacros / práctica */}
+        {(location.pathname.startsWith('/simulacros') || location.pathname.startsWith('/cert/')) && (
+          <div className="gc-disclaimer">
+            <span className="gc-disclaimer-tag">{t('nav.disclaimerTag')}</span>
+            <p>{t('nav.disclaimer')}</p>
+          </div>
+        )}
         <div className="gc-footer-line">{t('nav.footer', { name: theme?.name ?? 'AT&T Certifica' })}</div>
       </footer>
 
