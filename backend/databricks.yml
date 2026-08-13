@@ -1,5 +1,5 @@
 bundle:
-  name: certifica
+  name: certifica_att
 
 sync:
   include:
@@ -15,57 +15,19 @@ sync:
     - ".venv/**"
 
 targets:
-  dev:
-    mode: development
-    default: true
-    workspace:
-      host: https://fevm-serverless-stable-cvpomp.cloud.databricks.com
-      profile: fe-vm-serverless-stable-cvpomp
-
-  prod:
-    mode: production
-    workspace:
-      host: https://fevm-serverless-stable-cvpomp.cloud.databricks.com
-      profile: fe-vm-serverless-stable-cvpomp
-
-  # Demo em workspace Free Edition (LLM via gpt-oss-120b; Claude Opus 4.8 está
-  # com rate-limit 0 neste workspace).
-  demo:
-    mode: development
-    workspace:
-      host: https://dbc-c44b590f-825c.cloud.databricks.com
-      profile: dbc-demo-certifica
-
-  # Deploy em e2-demo-field-eng (Claude Opus 4.8 disponível; Lakebase certifica-db
-  # em us-west-2). Substitui os ambientes cvpomp/Free Edition perdidos.
-  fieldeng:
-    mode: development
-    workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
-      profile: e2-demo-field-eng
-
-  # Deploy em fevm-moi-ai (Claude Opus 4.8; Lakebase certifica-db em us-east-2).
-  # ⚠️ app.yaml PGHOST/CORS precisam apontar para este ws no momento do deploy
-  # (editar app.yaml -> deploy -> restaurar). PGHOST: ep-divine-cherry-d81jnxv1 (us-east-2).
+  # AT&T Certifica vive em fevm-moi-ai (Claude Opus 4.8; Lakebase em us-east-2).
   moiai:
     mode: development
+    default: true
     workspace:
       host: https://fevm-moi-ai.cloud.databricks.com
       profile: fevm-moi-ai
 
-  # Deploy em dbc-d2d6bce9 (Claude Opus 4.8; Lakebase certifica-db us-west-2,
-  # endpoint ep-muddy-truth-d15b8jwx). app.yaml já aponta para este ws.
-  d2d6:
-    mode: development
-    workspace:
-      host: https://dbc-d2d6bce9-5b8e.cloud.databricks.com
-      profile: dbc-d2d6bce9
-
 resources:
   apps:
-    certifica:
-      name: certifica
-      description: "Certifica — Hub multi-tenant de preparación para certificaciones · Prep. 2026-08-11"
+    certifica_att:
+      name: certifica-att
+      description: "AT&T Certifica — Plano de capacitação corporativa em Databricks (trilhas por área/usuário, simulados, gamificação)"
       source_code_path: .
       # OBO: scope de User authorization para o token do usuário logado poder
       # consultar serving endpoints (Claude/GPT-5). Sem isto, todo deploy reseta
@@ -75,12 +37,12 @@ resources:
       resources:
         - name: jwt-secret
           secret:
-            scope: santander-certifica
+            scope: certifica-att
             key: jwt_secret
             permission: READ
         - name: pg-password
           secret:
-            scope: santander-certifica
+            scope: certifica-att
             key: pg_password
             permission: READ
         # Auth ao Postgres é por native login (certifica_app + senha); o app não

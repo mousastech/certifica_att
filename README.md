@@ -1,27 +1,59 @@
-# Certifica
+# AT&T Certifica
 
-Plataforma **multi-tenant** de preparación para **certificaciones Databricks** —
-simulacros con corrección y explicaciones, flashcards y generación de preguntas vía IA.
-Vendible a múltiples clientes (tenants): cada empresa tiene su propio branding, sus
-usuarios y sus resultados aislados, compartiendo un banco común de preguntas.
+**Plano de capacitação corporativa em Databricks** para a AT&T — **não** apenas
+preparação para certificação. Cada **área/persona** (CDO, Ciberseguridad/CSO,
+Finanças-Genie, Engenharia de Dados, Ciência de Dados, Analistas, Liderança) recebe
+**trilhas personalizadas** de aprendizagem (cursos, hands-on, docs, vídeos) com
+**simulados opcionais**, além de flashcards, geração de questões por IA, **gamificação**
+(pontos/níveis/medalhas/ranking) e carga de usuários **em lote via planilha**. Pensada
+para o **RH da AT&T** operar capacitação em massa.
 
-Basado en *gol-ml-certified-app* (a su vez inspirado en *Databricks Get CertifAIed*).
-**Deploy actual: Databricks Apps** (host alternativo AWS documentado más abajo).
-Disponible en **español, português e inglés** (selector de idioma en la UI).
+Fork **single-tenant** de *Santander Certifica* (mantém o motor de simulados/IA por baixo,
+exclusivo para a AT&T). Deploy em **Databricks Apps** (`certifica-att` em fevm-moi-ai).
+UI em **português, español e inglés**.
 
-- **Frontend** React + TypeScript + Vite → servido por el backend (SPA en `/static`)
+- **Frontend** React + TypeScript + Vite → servido pelo backend (SPA em `/static`)
 - **Backend** FastAPI (Python) → **Databricks Apps**
-- **Datos** Postgres → **Databricks Lakebase** (un schema, multi-tenant row-level)
-- **LLM** generación de preguntas → **Databricks Foundation Model API** (Claude Opus 4.8)
+- **Dados** Postgres → **Databricks Lakebase** (schema dedicado `certifica_att`)
+- **LLM** geração de questões/estudo → **Databricks Foundation Model API** (Claude)
+
+Deploy: veja **[DEPLOY_ATT.md](DEPLOY_ATT.md)**. Modelo de planilha em **[templates/](templates/)**.
 
 ---
 
-## Modelo multi-tenant
+## Conceitos: grupos, trilhas e personalização
 
-Aislamiento **row-level**: el banco de preguntas (`certifications` / `questions` /
-`flashcards`) es **global y compartido**; lo específico de cada cliente lleva `tenant_id`
-(`users`, `test_sessions`, `test_answers`). El branding (color, logo, nombre) se aplica
-**en runtime** por tenant, así que un solo build sirve a todos.
+- **Trilha (track)** — percurso curado de aprendizagem: aulas (eLearning/hands-on/doc/vídeo)
+  + simulados **opcionais**. Vive em `tenants.routes` (JSONB) com uma `key` estável.
+- **Grupo (área/persona)** — tabela `groups`: recebe um conjunto de trilhas (`track_keys`)
+  e, opcionalmente, simulados (`certification_ids`). Ex.: `cdo`, `cso`, `finanzas`.
+- **Usuário** — pertence a um grupo (`users.group_key`) e pode ter trilhas extras
+  (`users.extra_track_keys`). O que ele vê é resolvido em runtime
+  (`services/groups.visible_tracks_for_user`).
+- **Gamificação** — pontos derivados do progresso real (aulas concluídas + simulados +
+  aprovações), com níveis, medalhas e ranking por área (`services/gamification`).
+
+```
+   Navegador  ──HTTPS──►  Databricks Apps (certifica-att)
+                          ┌────────────────────────────────────────────┐
+                          │ FastAPI ──serve──► SPA React (/static)       │
+                          │   ├── SQL ──► Lakebase (schema certifica_att) │  grupos + trilhas + progresso
+                          │   └── FMAPI ─► Claude                         │  geração de questões / estudo IA
+                          └────────────────────────────────────────────┘
+```
+
+### Telas principais (admin/RH)
+- **Grupos** (`/admin/grupos`) — cria áreas e escolhe quais trilhas/simulados cada uma vê.
+- **Trilhas** (`/admin/trilhas`) — visão por trilha: matriculados, % de progresso, simulados, aprovações.
+- **Importar planilha** — carga em lote (CSV/XLSX: `nome, email, area, grupo`).
+- **Ranking** (`/ranking`) — gamificação, aberto a todos os usuários.
+
+---
+
+## (Legado) Modelo multi-tenant
+
+> A AT&T Certifica é **single-tenant** (tenant fixo `att`). A base multi-tenant abaixo
+> permanece no motor, mas as telas de plataforma/seleção de empresa foram removidas.
 
 ```
    Navegador  ──HTTPS──►  Databricks Apps

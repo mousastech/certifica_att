@@ -8,8 +8,11 @@ env:
     value: "false"
 
   # ── Lakebase (Postgres) — PG native login (usuário + senha do secret scope) ──
+  # AT&T Certifica vive em fevm-moi-ai (us-east-2). Schema DEDICADO 'certifica_att'
+  # — pode coexistir na mesma instância Lakebase sem tocar em outros schemas.
+  # ⚠️ Confirme o PGHOST da instância Lakebase deste workspace no deploy.
   - name: PGHOST
-    value: "ep-muddy-truth-d15b8jwx.database.us-west-2.cloud.databricks.com"
+    value: "ep-divine-cherry-d81jnxv1.database.us-east-2.cloud.databricks.com"
   - name: PGPORT
     value: "5432"
   - name: PGDATABASE
@@ -21,7 +24,7 @@ env:
   - name: PGSSLMODE
     value: "require"
   - name: PGSCHEMA
-    value: "certifica"
+    value: "certifica_att"
 
   # ── Geração via LLM (Foundation Model API) ───────────────────────────────
   # As chamadas de LLM usam OBO (token do usuário logado, via header
@@ -46,10 +49,10 @@ env:
   - name: PASS_MARK
     value: "70"
 
-  # Seed idempotente no primeiro boot (cria schema multi-tenant + banco global + tenant platform).
-  # Desligado após o primeiro seed bem-sucedido (banco já populado).
+  # Seed idempotente no primeiro boot (cria schema + banco global + tenant 'att'
+  # + trilhas + grupos AT&T). DESLIGAR após o primeiro seed bem-sucedido.
   - name: SEED_ON_STARTUP
-    value: "false"
+    value: "true"
 
   - name: CORS_ORIGINS
-    value: "https://*.databricksapps.com,https://dbc-d2d6bce9-5b8e.cloud.databricks.com"
+    value: "https://*.databricksapps.com,https://fevm-moi-ai.cloud.databricks.com"
