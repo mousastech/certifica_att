@@ -184,12 +184,7 @@ async def admin_bulk_group(body: BulkGroupBody, request: Request,
     gk = (body.group_key or "").strip().lower() or None
     if gk and not groups_svc.get_group(admin.tenant_id, gk):
         raise HTTPException(422, f"Grupo '{gk}' inexistente")
-    n = 0
-    for email in body.emails:
-        e = email.lower()
-        if users_svc.get_user(admin.tenant_id, e):
-            groups_svc.set_user_group(admin.tenant_id, e, gk)
-            n += 1
+    n = groups_svc.set_user_group_bulk(admin.tenant_id, body.emails, gk)
     activity.log_event(admin.tenant_id, admin.email, "bulk_group", request=request,
                        detail={"group": gk, "count": n})
     return {"ok": True, "updated": n}

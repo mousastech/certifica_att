@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -94,10 +94,14 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
   const { data: groups } = useQuery({ queryKey: ['adm-groups'], queryFn: adminListGroups })
   const { data: mine } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
   const { data: certs } = useQuery({ queryKey: ['certs'], queryFn: getCertifications })
-  const { data: membership } = useQuery({ queryKey: ['membership', user.email], queryFn: () => adminGetMembership(user.email) })
+  const { data: membership, isSuccess: memLoaded } = useQuery({ queryKey: ['membership', user.email], queryFn: () => adminGetMembership(user.email) })
   const [extra, setExtra] = useState<string[]>([])
+  // Sembramos el estado UNA sola vez cuando llega membership, para no pisar
+  // ediciones en curso del admin si el query resuelve tarde.
+  const seeded = useRef(false)
   useEffect(() => {
-    if (membership) {
+    if (membership && !seeded.current) {
+      seeded.current = true
       setExtra(membership.extra_track_keys || [])
       if (membership.group_key != null) setGroupKey(membership.group_key || '')
     }
@@ -113,10 +117,14 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         name: name.trim(), area: area.trim(),
         ...(isAdmin !== user.is_admin ? { is_admin: isAdmin } : {}),
       })
-      const groupChanged = (groupKey || '') !== (membership?.group_key || '')
-      const extraChanged = JSON.stringify([...extra].sort()) !== JSON.stringify([...(membership?.extra_track_keys || [])].sort())
-      if (groupChanged || extraChanged)
-        await adminSetUserGroup(user.email, { group_key: groupKey || null, extra_track_keys: extra })
+      // Solo tocamos grupo/trilhas extra si ya cargó membership; así nunca
+      // sobrescribimos con valores vacíos por un query pendiente o con error.
+      if (memLoaded) {
+        const groupChanged = (groupKey || '') !== (membership?.group_key || '')
+        const extraChanged = JSON.stringify([...extra].sort()) !== JSON.stringify([...(membership?.extra_track_keys || [])].sort())
+        if (groupChanged || extraChanged)
+          await adminSetUserGroup(user.email, { group_key: groupKey || null, extra_track_keys: extra })
+      }
       if (pw) await adminSetUserPassword(user.email, pw)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); onClose() },
@@ -181,7 +189,7 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         {err && <div className="login-error">{err}</div>}
         <div className="modal-actions">
           <button className="btn" onClick={onClose}>{t('admin.cancel')}</button>
-          <button className="btn btn-primary" disabled={save.isPending} onClick={() => { setErr(null); save.mutate() }}>
+          <button className="btn btn-primary" disabled={save.isPending || !memLoaded} onClick={() => { setErr(null); save.mutate() }}>
             {save.isPending ? <Loader2 size={15} className="spinning" /> : t('admin.save')}
           </button>
         </div>
@@ -377,13 +385,20 @@ export default function Admin() {
   // seleção em lote → atribuição de grupo
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkGroup, setBulkGroup] = useState('')
+  const [bulkErr, setBulkErr] = useState<string | null>(null)
   const toggleSel = (email: string) => setSelected(s => {
     const n = new Set(s); n.has(email) ? n.delete(email) : n.add(email); return n
   })
   const bulkAssign = useMutation({
     mutationFn: () => adminBulkGroup([...selected], bulkGroup || null),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); setSelected(new Set()) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); setSelected(new Set()); setBulkErr(null) },
+    onError: (e: any) => setBulkErr(e?.response?.data?.detail ?? t('admin.assignError')),
   })
+  const runBulkAssign = () => {
+    // Sin grupo = quitar el grupo a todos los seleccionados: confirmamos para evitar borrado accidental.
+    if (!bulkGroup && !confirm(t('admin.confirmClearGroup', { n: selected.size }))) return
+    setBulkErr(null); bulkAssign.mutate()
+  }
 
   if (isLoading) return <div className="spinner" />
   if (!data) return <p className="muted">{t('admin.noData')}</p>
@@ -410,7 +425,7 @@ export default function Admin() {
             <Activity size={16} /> {t('admin.activityLog')}
           </button>
           <button className="btn" onClick={() => setImporting(true)}>
-            <Upload size={16} /> Importar planilha
+            <Upload size={16} /> {t('admin.importSheet')}
           </button>
           <button className="btn" onClick={() => setInviting(true)}>
             <Link2 size={16} /> {t('admin.inviteUser')}
@@ -436,10 +451,11 @@ export default function Admin() {
             <option value="">{t('admin.noGroup')}</option>
             {(groups ?? []).map(g => <option key={g.key} value={g.key}>{g.name}</option>)}
           </select>
-          <button className="btn btn-primary" disabled={bulkAssign.isPending} onClick={() => bulkAssign.mutate()}>
+          <button className="btn btn-primary" disabled={bulkAssign.isPending} onClick={runBulkAssign}>
             {bulkAssign.isPending ? <><Loader2 size={14} className="spinning" /> {t('admin.assigning')}</> : <><Users2 size={15} /> {t('admin.assignGroup')}</>}
           </button>
-          <button className="link-btn" onClick={() => setSelected(new Set())}>{t('admin.clearSel')}</button>
+          <button className="link-btn" onClick={() => { setSelected(new Set()); setBulkErr(null) }}>{t('admin.clearSel')}</button>
+          {bulkErr && <span className="login-error" style={{ margin: 0 }}>{bulkErr}</span>}
         </div>
       )}
 

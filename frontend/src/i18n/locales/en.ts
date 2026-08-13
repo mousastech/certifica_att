@@ -161,7 +161,9 @@ export const en: Dict = {
     extraTracks: 'Extra tracks (personalization)',
     extraTracksHint: 'Additional tracks just for this user, on top of the group.',
     selectedN: '{n} selected', assignGroup: 'Assign group', clearSel: 'Clear selection',
-    assigning: 'Assigning…',
+    assigning: 'Assigning…', assignError: 'Could not assign the group. Please try again.',
+    confirmClearGroup: 'Remove the group from {n} selected user(s)?',
+    importSheet: 'Import spreadsheet',
   },
   gadmin: {
     title: 'Groups & Track Assignment',

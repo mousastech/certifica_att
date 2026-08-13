@@ -159,7 +159,9 @@ export const es = {
     extraTracks: 'Rutas extra (personalización)',
     extraTracksHint: 'Rutas adicionales solo para este usuario, además de las del grupo.',
     selectedN: '{n} seleccionados', assignGroup: 'Asignar grupo', clearSel: 'Limpiar selección',
-    assigning: 'Asignando…',
+    assigning: 'Asignando…', assignError: 'No se pudo asignar el grupo. Intenta de nuevo.',
+    confirmClearGroup: '¿Quitar el grupo a {n} usuario(s) seleccionado(s)?',
+    importSheet: 'Importar planilla',
   },
   gadmin: {
     title: 'Grupos y Asignación de Rutas',

@@ -161,7 +161,9 @@ export const pt: Dict = {
     extraTracks: 'Trilhas extras (personalização)',
     extraTracksHint: 'Trilhas adicionais só para este usuário, além das do grupo.',
     selectedN: '{n} selecionados', assignGroup: 'Atribuir grupo', clearSel: 'Limpar seleção',
-    assigning: 'Atribuindo…',
+    assigning: 'Atribuindo…', assignError: 'Não foi possível atribuir o grupo. Tente novamente.',
+    confirmClearGroup: 'Remover o grupo de {n} usuário(s) selecionado(s)?',
+    importSheet: 'Importar planilha',
   },
   gadmin: {
     title: 'Grupos & Atribuição de Trilhas',

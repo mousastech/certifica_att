@@ -149,6 +149,22 @@ def set_user_group(tenant_id: str, email: str, group_key: Optional[str]) -> None
                          (gk, tenant_id, email))
 
 
+def set_user_group_bulk(tenant_id: str, emails: list[str], group_key: Optional[str]) -> int:
+    """Atribui `group_key` a vários usuários em UMA transação. Retorna nº atualizados."""
+    gk = (group_key or "").strip().lower() or None
+    emails = list({(e or "").lower() for e in emails if e})
+    if not emails:
+        return 0
+    if _use_db():
+        from app.db import get_conn
+        with get_conn() as conn:
+            cur = conn.execute(
+                "UPDATE users SET group_key=%s WHERE tenant_id=%s AND email = ANY(%s)",
+                (gk, tenant_id, emails))
+            return cur.rowcount if cur.rowcount and cur.rowcount >= 0 else len(emails)
+    return 0
+
+
 def set_user_extra_tracks(tenant_id: str, email: str, track_keys: list) -> None:
     email = email.lower()
     if _use_db():
