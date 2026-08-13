@@ -50,9 +50,10 @@ env:
     value: "70"
 
   # Seed idempotente no primeiro boot (cria schema + banco global + tenant 'att'
-  # + trilhas + grupos AT&T). DESLIGAR após o primeiro seed bem-sucedido.
+  # + trilhas + grupos AT&T). Já semeado em 13-ago-2026 → desligado (o DDL segue
+  # rodando em todo boot, idempotente, para novas tabelas).
   - name: SEED_ON_STARTUP
-    value: "true"
+    value: "false"
 
   - name: CORS_ORIGINS
     value: "https://*.databricksapps.com,https://fevm-moi-ai.cloud.databricks.com"
