@@ -5,6 +5,7 @@ import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
 import InviteAccept from '@/pages/InviteAccept'
 import Home from '@/pages/Home'
+import Areas from '@/pages/Areas'
 import Program from '@/pages/Program'
 import ProgramEditor from '@/pages/ProgramEditor'
 import RoutesPage from '@/pages/Routes'
@@ -29,7 +30,8 @@ function AppGate() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<Program />} />
+        <Route index element={<Areas />} />
+        <Route path="programa" element={<Program />} />
         <Route path="simulacros" element={<Home />} />
         <Route path="rutas" element={<RoutesPage />} />
         <Route path="rutas/editar" element={<RoutesEditor />} />

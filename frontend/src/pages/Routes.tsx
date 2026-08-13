@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Map, ChevronRight, ExternalLink, Pencil, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
-import { getMyTracks, getProgress, markClass, unmarkClass, getCertInfo } from '@/services/api'
+import { getMyTracks, listAreas, getProgress, markClass, unmarkClass, getCertInfo } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
 import { useT } from '@/i18n'
 import type { ClassItem } from '@/types'
@@ -14,7 +14,20 @@ export default function Routes() {
   const t = useT()
   const qc = useQueryClient()
   const slug = user?.tenant_slug || ''
-  const { data, isLoading } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
+  const [params] = useSearchParams()
+  const areaKey = params.get('area') || ''
+  // Sem ?area → trilhas personalizadas do usuário. Com ?area → navega uma área (hub).
+  const { data: mineData, isLoading: mineLoading } = useQuery({
+    queryKey: ['my-tracks'], queryFn: getMyTracks, enabled: !areaKey,
+  })
+  const { data: areasData, isLoading: areasLoading } = useQuery({
+    queryKey: ['areas'], queryFn: listAreas, enabled: !!areaKey,
+  })
+  const browseArea = areaKey ? areasData?.areas.find(a => a.key === areaKey) : undefined
+  const data = areaKey
+    ? (areasData ? { tracks: browseArea?.tracks ?? [], group: browseArea ?? null } : undefined)
+    : mineData
+  const isLoading = areaKey ? areasLoading : mineLoading
   const { data: prog } = useQuery({ queryKey: ['progress'], queryFn: getProgress })
   const done = new Set(prog?.completed ?? [])
   const toggle = useMutation({
@@ -42,11 +55,20 @@ export default function Routes() {
     <div className="prog">
       <div className="au-title-row">
         <div>
-          <h1 className="hist-title"><Map size={20} style={{ verticalAlign: -3 }} /> {t('routes.title')}</h1>
+          {areaKey && (
+            <button className="link-btn" style={{ marginBottom: 4 }} onClick={() => navigate('/')}>
+              ← {t('areas.explore')}
+            </button>
+          )}
+          <h1 className="hist-title">
+            <Map size={20} style={{ verticalAlign: -3 }} /> {areaKey && group ? group.name : t('routes.title')}
+          </h1>
           <p className="muted hist-sub">
-            {group
-              ? <>{t('gami.myArea')}: <b style={{ color: group.color || 'var(--brand-primary)' }}>{group.name}</b> · {t('gami.tracksForYou')}</>
-              : t('routes.pick')}
+            {areaKey
+              ? (group?.description || t('routes.pick'))
+              : group
+                ? <>{t('gami.myArea')}: <b style={{ color: group.color || 'var(--brand-primary)' }}>{group.name}</b> · {t('gami.tracksForYou')}</>
+                : t('routes.pick')}
           </p>
         </div>
         {canEdit && (

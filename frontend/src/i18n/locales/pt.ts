@@ -9,7 +9,7 @@ export const pt: Dict = {
     program: 'Programa', routes: 'Trilhas', simulacros: 'Simulados',
     certifications: 'Certificações', myHistory: 'Meu histórico', admin: 'Admin',
     logout: 'Sair', allCerts: '← Todas as certificações', mainNav: 'Navegação principal',
-    ranking: 'Ranking', groups: 'Grupos', tracks: 'Trilhas (gestão)',
+    ranking: 'Ranking', groups: 'Grupos', tracks: 'Trilhas (gestão)', areas: 'Áreas', programLink: 'Programa & exame',
     footer: '{name} · Preparação para certificações Databricks · As questões deste simulador são de prática e não refletem o exame oficial.',
     disclaimerTag: 'Apoio ao estudo — não é garantia',
     disclaimer: 'O Certifica é uma ferramenta de estudo criada para ajudar você a construir e dominar o conhecimento por trás das certificações Databricks. Ele apoia a sua preparação, mas não garante a aprovação no exame oficial. As questões de prática servem para aprender e não refletem o conteúdo, formato ou rigor exatos do exame real. Combine esta ferramenta com o eLearning oficial, a documentação e os labs práticos.',
@@ -234,5 +234,14 @@ export const pt: Dict = {
     b_first_class: 'Primeira aula', b_five_classes: '5 aulas concluídas', b_fifteen_classes: '15 aulas concluídas',
     b_first_sim: 'Primeiro simulado', b_ten_sims: '10 simulados', b_first_pass: 'Simulado aprovado',
     b_three_pass: '3 aprovações', b_advanced: 'Nível Avançado', b_master: 'Mestre Databricks',
+  },
+  areas: {
+    title: 'Plano de Capacitação Databricks',
+    sub: 'Escolha sua área e siga sua trilha personalizada — cursos, hands-on e simulados no seu ritmo.',
+    myTracksCta: 'Minhas trilhas', explore: 'Explorar por área', myArea: 'Sua área',
+    tracks: '{n} trilhas', lessons: '{n} aulas', enter: 'Entrar', recommended: 'Recomendado para você',
+    genieBadge: 'Destaque', genieTitle: 'Genie para Finanças',
+    genieDesc: 'Pergunte aos seus dados em linguagem natural com AI/BI Genie — sem escrever SQL.',
+    genieCta: 'Explorar Genie',
   },
 }

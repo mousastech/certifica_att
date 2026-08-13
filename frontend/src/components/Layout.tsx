@@ -26,7 +26,7 @@ export default function Layout() {
 
         <nav className="gc-nav" aria-label={t('nav.mainNav')}>
           <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>
-            <Compass size={16} /> {t('nav.program')}
+            <Compass size={16} /> {t('nav.areas')}
           </NavLink>
           <NavLink to="/rutas" className={({ isActive }) => isActive ? 'active' : ''}>
             <Map size={16} /> {t('nav.routes')}

@@ -19,7 +19,7 @@ export default function MobileNav() {
   return (
     <nav className="mnav" aria-label={t('nav.mainNav')}>
       <NavLink to="/" end className={item}>
-        <Compass size={22} /><span>{t('nav.program')}</span>
+        <Compass size={22} /><span>{t('nav.areas')}</span>
       </NavLink>
       <NavLink to="/rutas" className={item}>
         <Map size={22} /><span>{t('nav.routes')}</span>

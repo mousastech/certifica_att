@@ -92,6 +92,27 @@ async def my_certifications(user: UserPublic = Depends(security.get_current_user
     return [c for c in certs if (c.get("id") if isinstance(c, dict) else getattr(c, "id", None)) in allowed]
 
 
+@router.get("/groups")
+async def list_areas(user: UserPublic = Depends(security.get_current_user)):
+    """Áreas (grupos) com suas trilhas resolvidas — navegação por área (estilo Genie).
+
+    Aberto a qualquer usuário logado: é um catálogo de aprendizagem, não dado sensível."""
+    from app.services import tenants as tenants_svc
+    tt = tenants_svc.get_tenant_by_id(user.tenant_id)
+    all_tracks = (tenants_svc.get_routes(tt["slug"]) if tt else {}).get("routes", [])
+    by_key = {t.get("key"): t for t in all_tracks if t.get("key")}
+    areas = []
+    for g in groups_svc.list_groups(user.tenant_id):
+        tks = g.get("track_keys") or []
+        tracks = [by_key[k] for k in tks if k in by_key] if tks else all_tracks
+        areas.append({
+            **g, "tracks": tracks,
+            "n_tracks": len(tracks),
+            "n_classes": sum(len(t.get("classes", []) or []) for t in tracks),
+        })
+    return {"areas": areas}
+
+
 # ── Ranking (gamificação) ───────────────────────────────────────────────────────
 @router.get("/gamification/leaderboard")
 async def gami_leaderboard(user: UserPublic = Depends(security.get_current_user),

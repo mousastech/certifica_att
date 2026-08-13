@@ -5,7 +5,7 @@ import type {
   TokenResponse, UserPublic, AttemptHistory, AdminOverview, AuthStatus,
   SessionDetail, Theme, SignupPayload, TenantPublic, Operator, ProgramContent, LeaderboardRow,
   RoutesContent, ProgramProgress, StudyPlanResponse, InviteCreated, InviteInfo,
-  Group, MyTracks, Gamification, GamiLeaderboard, TracksOverview, BulkResult,
+  Group, MyTracks, Gamification, GamiLeaderboard, TracksOverview, BulkResult, AreasResponse,
 } from '@/types'
 
 // Em Amplify (frontend) o backend roda em outro origin (App Runner): aponte
@@ -199,6 +199,7 @@ export const topicQuiz = (certification_id: string, topic: string, count = 6): P
 // ── Grupos / trilhas atribuídas / gamificação (AT&T) ──────────────────────────
 // Trainee
 export const getMyTracks = (): Promise<MyTracks> => api.get('/me/tracks').then(r => r.data)
+export const listAreas = (): Promise<AreasResponse> => api.get('/groups').then(r => r.data)
 export const getMyCertifications = (): Promise<Certification[]> =>
   api.get('/me/certifications').then(r => r.data)
 export const getMyGamification = (): Promise<Gamification> =>

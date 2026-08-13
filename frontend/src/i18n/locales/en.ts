@@ -9,7 +9,7 @@ export const en: Dict = {
     program: 'Program', routes: 'Paths', simulacros: 'Practice',
     certifications: 'Certifications', myHistory: 'My history', admin: 'Admin',
     logout: 'Log out', allCerts: '← All certifications', mainNav: 'Main navigation',
-    ranking: 'Ranking', groups: 'Groups', tracks: 'Tracks (admin)',
+    ranking: 'Ranking', groups: 'Groups', tracks: 'Tracks (admin)', areas: 'Areas', programLink: 'Program & exam',
     footer: '{name} · Databricks certification prep · These are practice questions and do not reflect the official exam.',
     disclaimerTag: 'Study aid — not a guarantee',
     disclaimer: 'Certifica is a study tool designed to help you build and master the knowledge behind the Databricks certifications. It supports your preparation but does not guarantee that you will pass the official exam. The practice questions are for learning and do not reflect the exact content, format or rigor of the real exam. Combine this tool with the official eLearning, documentation and hands-on labs.',
@@ -234,5 +234,14 @@ export const en: Dict = {
     b_first_class: 'First lesson', b_five_classes: '5 lessons completed', b_fifteen_classes: '15 lessons completed',
     b_first_sim: 'First practice test', b_ten_sims: '10 practice tests', b_first_pass: 'Practice test passed',
     b_three_pass: '3 passes', b_advanced: 'Advanced level', b_master: 'Databricks Master',
+  },
+  areas: {
+    title: 'Databricks Training Plan',
+    sub: 'Pick your area and follow your personalized track — courses, hands-on and practice tests at your pace.',
+    myTracksCta: 'My tracks', explore: 'Explore by area', myArea: 'Your area',
+    tracks: '{n} tracks', lessons: '{n} lessons', enter: 'Enter', recommended: 'Recommended for you',
+    genieBadge: 'Featured', genieTitle: 'Genie for Finance',
+    genieDesc: 'Ask your data in natural language with AI/BI Genie — no SQL required.',
+    genieCta: 'Explore Genie',
   },
 }

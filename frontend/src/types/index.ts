@@ -231,6 +231,8 @@ export interface GamiRow {
   points: number; level: string; classes_done: number; attempts: number; passed: number
 }
 export interface GamiLeaderboard { rows: GamiRow[]; groups: Group[]; group_key: string | null }
+export interface Area extends Group { tracks: RouteItem[]; n_tracks: number; n_classes: number }
+export interface AreasResponse { areas: Area[] }
 export interface TrackEnrolled {
   email: string; name: string; area?: string; group_key?: string
   classes_done: number; classes_total: number; pct: number; attempts: number; passed: number

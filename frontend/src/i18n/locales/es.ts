@@ -7,7 +7,7 @@ export const es = {
     program: 'Programa', routes: 'Rutas', simulacros: 'Simulacros',
     certifications: 'Certificaciones', myHistory: 'Mi historial', admin: 'Admin',
     logout: 'Salir', allCerts: '← Todas las certificaciones', mainNav: 'Navegación principal',
-    ranking: 'Ranking', groups: 'Grupos', tracks: 'Rutas (gestión)',
+    ranking: 'Ranking', groups: 'Grupos', tracks: 'Rutas (gestión)', areas: 'Áreas', programLink: 'Programa y examen',
     footer: '{name} · Preparación para certificaciones Databricks · Las preguntas de este simulador son de práctica y no reflejan el examen oficial.',
     disclaimerTag: 'Apoyo de estudio — no es una garantía',
     disclaimer: 'Certifica es una herramienta de estudio diseñada para ayudarte a construir y dominar el conocimiento detrás de las certificaciones Databricks. Apoya tu preparación, pero no garantiza que apruebes el examen oficial. Las preguntas de práctica son para aprender y no reflejan el contenido, formato ni rigor exactos del examen real. Combina esta herramienta con el eLearning oficial, la documentación y los labs prácticos.',
@@ -232,6 +232,15 @@ export const es = {
     b_first_class: 'Primera clase', b_five_classes: '5 clases completadas', b_fifteen_classes: '15 clases completadas',
     b_first_sim: 'Primer simulacro', b_ten_sims: '10 simulacros', b_first_pass: 'Simulacro aprobado',
     b_three_pass: '3 aprobaciones', b_advanced: 'Nivel Avanzado', b_master: 'Maestro Databricks',
+  },
+  areas: {
+    title: 'Plan de Capacitación Databricks',
+    sub: 'Elige tu área y sigue tu ruta personalizada — cursos, hands-on y simulacros a tu ritmo.',
+    myTracksCta: 'Mis rutas', explore: 'Explorar por área', myArea: 'Tu área',
+    tracks: '{n} rutas', lessons: '{n} clases', enter: 'Entrar', recommended: 'Recomendado para ti',
+    genieBadge: 'Destacado', genieTitle: 'Genie para Finanzas',
+    genieDesc: 'Pregunta a tus datos en lenguaje natural con AI/BI Genie — sin escribir SQL.',
+    genieCta: 'Explorar Genie',
   },
 }
 export type Dict = typeof es
