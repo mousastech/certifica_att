@@ -5,6 +5,7 @@ import type {
   TokenResponse, UserPublic, AttemptHistory, AdminOverview, AuthStatus,
   SessionDetail, Theme, SignupPayload, TenantPublic, Operator, ProgramContent, LeaderboardRow,
   RoutesContent, ProgramProgress, StudyPlanResponse, InviteCreated, InviteInfo,
+  Group, MyTracks, Gamification, GamiLeaderboard, TracksOverview, BulkResult,
 } from '@/types'
 
 // Em Amplify (frontend) o backend roda em outro origin (App Runner): aponte
@@ -194,3 +195,40 @@ export const getStudyPlan = (certification_id: string): Promise<StudyPlanRespons
 // TestSession pronta (questões já persistidas) → responder e chamar submitTest.
 export const topicQuiz = (certification_id: string, topic: string, count = 6): Promise<TestSession> =>
   api.post('/me/topic-quiz', { certification_id, topic, count }, { timeout: 120000 }).then(r => r.data)
+
+// ── Grupos / trilhas atribuídas / gamificação (AT&T) ──────────────────────────
+// Trainee
+export const getMyTracks = (): Promise<MyTracks> => api.get('/me/tracks').then(r => r.data)
+export const getMyCertifications = (): Promise<Certification[]> =>
+  api.get('/me/certifications').then(r => r.data)
+export const getMyGamification = (): Promise<Gamification> =>
+  api.get('/me/gamification').then(r => r.data)
+export const getGamiLeaderboard = (scope: 'all' | 'group' = 'all', group?: string): Promise<GamiLeaderboard> =>
+  api.get('/gamification/leaderboard', { params: { scope, group } }).then(r => r.data)
+
+// Admin — grupos
+export const adminListGroups = (): Promise<Group[]> => api.get('/admin/groups').then(r => r.data)
+export const adminCreateGroup = (body: Partial<Group>): Promise<Group> =>
+  api.post('/admin/groups', body).then(r => r.data)
+export const adminUpdateGroup = (key: string, body: Partial<Group>): Promise<Group> =>
+  api.patch(`/admin/groups/${encodeURIComponent(key)}`, body).then(r => r.data)
+export const adminDeleteGroup = (key: string): Promise<any> =>
+  api.delete(`/admin/groups/${encodeURIComponent(key)}`).then(r => r.data)
+
+// Admin — vínculo usuário↔grupo
+export const adminSetUserGroup = (email: string, body: { group_key?: string | null; extra_track_keys?: string[] }): Promise<any> =>
+  api.patch(`/admin/users/${encodeURIComponent(email)}/group`, body).then(r => r.data)
+
+// Admin — carga em lote
+export const adminBulkUsers = (fileData: File, defaultPassword?: string): Promise<BulkResult> => {
+  const fd = new FormData()
+  fd.append('file', fileData)
+  if (defaultPassword) fd.append('default_password', defaultPassword)
+  return api.post('/admin/users/bulk', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
+}
+export const getUsersTemplate = (kind: 'csv' | 'xlsx'): Promise<Blob> =>
+  api.get(`/admin/users/template.${kind}`, { responseType: 'blob' }).then(r => r.data)
+
+// Admin — visão por trilha
+export const adminTracksOverview = (): Promise<TracksOverview> =>
+  api.get('/admin/tracks/overview').then(r => r.data)

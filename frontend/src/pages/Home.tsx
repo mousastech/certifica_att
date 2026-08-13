@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Database, BarChart3, Brain, Sparkles, ArrowRight } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getCertifications } from '@/services/api'
+import { getMyCertifications } from '@/services/api'
 import { useT } from '@/i18n'
 import type { Certification } from '@/types'
 import './Home.css'
@@ -17,7 +17,7 @@ const ICON: Record<string, LucideIcon> = {
 export default function Home() {
   const navigate = useNavigate()
   const t = useT()
-  const { data, isLoading } = useQuery({ queryKey: ['certs'], queryFn: getCertifications })
+  const { data, isLoading } = useQuery({ queryKey: ['my-certs'], queryFn: getMyCertifications })
 
   return (
     <div>

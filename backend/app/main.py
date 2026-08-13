@@ -18,7 +18,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.config import get_settings
-from app.api import certifications, tests, generate, auth, tracking, tenants
+from app.api import certifications, tests, generate, auth, tracking, tenants, groups
 
 logging.basicConfig(
     level=getattr(logging, get_settings().LOG_LEVEL.upper(), logging.INFO),
@@ -89,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(tests.router, prefix="/api/tests", tags=["tests"])
     app.include_router(generate.router, prefix="/api/generate", tags=["generate"])
     app.include_router(tracking.router, prefix="/api", tags=["tracking"])
+    app.include_router(groups.router, prefix="/api", tags=["groups"])
 
     @app.get("/api/health")
     async def health():

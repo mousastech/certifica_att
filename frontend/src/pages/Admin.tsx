@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   Users, ListChecks, Award, Pencil, Power, PowerOff, Trash2, Loader2, UserPlus, Activity,
-  Link2, Copy, Check,
+  Link2, Copy, Check, Users2, Map, Upload, FileSpreadsheet, Download,
 } from 'lucide-react'
 import {
   getAdminOverview, adminCreateUser, adminUpdateUser, adminSetUserStatus,
   adminSetUserPassword, adminDeleteUser, adminInvite,
+  adminBulkUsers, getUsersTemplate, adminListGroups, adminSetUserGroup,
 } from '@/services/api'
+import type { BulkResult } from '@/types'
 import { useT, useI18n } from '@/i18n'
 import { useAuth } from '@/context/AuthContext'
 import type { AdminUserRow } from '@/types'
@@ -83,10 +85,12 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
   const { user: me } = useAuth()
   const [name, setName] = useState(user.name)
   const [area, setArea] = useState(user.area ?? '')
+  const [groupKey, setGroupKey] = useState(user.group_key ?? '')
   const [isAdmin, setIsAdmin] = useState(user.is_admin)
   const [pw, setPw] = useState('')
   const [err, setErr] = useState<string | null>(null)
   const isSelf = me?.email?.toLowerCase() === user.email.toLowerCase()
+  const { data: groups } = useQuery({ queryKey: ['adm-groups'], queryFn: adminListGroups })
 
   const save = useMutation({
     mutationFn: async () => {
@@ -94,6 +98,8 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         name: name.trim(), area: area.trim(),
         ...(isAdmin !== user.is_admin ? { is_admin: isAdmin } : {}),
       })
+      if ((groupKey || '') !== (user.group_key || ''))
+        await adminSetUserGroup(user.email, { group_key: groupKey || null })
       if (pw) await adminSetUserPassword(user.email, pw)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-overview'] }); onClose() },
@@ -107,6 +113,12 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         <p className="muted" style={{ marginBottom: 12 }}>{user.email}</p>
         <label>{t('admin.name')}<input value={name} onChange={e => setName(e.target.value)} /></label>
         <label>{t('admin.area')}<input value={area} onChange={e => setArea(e.target.value)} placeholder="—" /></label>
+        <label>Grupo (área)
+          <select value={groupKey} onChange={e => setGroupKey(e.target.value)}>
+            <option value="">— sem grupo (vê todas as trilhas) —</option>
+            {(groups ?? []).map(g => <option key={g.key} value={g.key}>{g.name}</option>)}
+          </select>
+        </label>
         <label>{t('admin.newPassword')}<input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••" /></label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
           <input type="checkbox" checked={isAdmin} disabled={isSelf}
@@ -214,15 +226,95 @@ function NewUserModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+function BulkImportModal({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient()
+  const [file, setFile] = useState<File | null>(null)
+  const [pw, setPw] = useState('Databricks#ATT2026')
+  const [result, setResult] = useState<BulkResult | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function dl(kind: 'csv' | 'xlsx') {
+    const blob = await getUsersTemplate(kind)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `modelo_usuarios_att.${kind}`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const run = useMutation({
+    mutationFn: () => adminBulkUsers(file!, pw),
+    onSuccess: (r) => { setResult(r); qc.invalidateQueries({ queryKey: ['admin-overview'] }) },
+    onError: (e: any) => setErr(e?.response?.data?.detail ?? 'Falha ao importar'),
+  })
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card card" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <h3><Upload size={18} style={{ verticalAlign: -3 }} /> Importar usuários em lote</h3>
+        <p className="muted" style={{ marginBottom: 12 }}>
+          Planilha com colunas <b>nome, email, area, grupo</b> (CSV ou XLSX). O campo
+          <b> grupo</b> aceita a chave ou o nome de uma área. Novos usuários recebem a
+          senha inicial abaixo (troca no 1º acesso).
+        </p>
+
+        {result ? (
+          <>
+            <div className="card" style={{ padding: 14, marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 20 }}>
+                <div><b style={{ fontSize: 22 }}>{result.created}</b><div className="muted" style={{ fontSize: 12 }}>criados</div></div>
+                <div><b style={{ fontSize: 22 }}>{result.updated}</b><div className="muted" style={{ fontSize: 12 }}>atualizados</div></div>
+                <div><b style={{ fontSize: 22 }}>{result.total}</b><div className="muted" style={{ fontSize: 12 }}>linhas</div></div>
+                <div><b style={{ fontSize: 22, color: result.errors.length ? 'var(--brand-error)' : undefined }}>{result.errors.length}</b><div className="muted" style={{ fontSize: 12 }}>erros</div></div>
+              </div>
+            </div>
+            {result.errors.length > 0 && (
+              <div style={{ maxHeight: 160, overflow: 'auto', fontSize: 12 }} className="login-error">
+                {result.errors.map((e, i) => <div key={i}>Linha {e.row} ({e.email || '—'}): {e.error}</div>)}
+              </div>
+            )}
+            <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>Senha inicial: <code>{result.default_password}</code></p>
+            <div className="modal-actions">
+              <button className="btn btn-primary" onClick={onClose}>Concluir</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <button className="btn" onClick={() => dl('csv')}><Download size={14} /> Modelo CSV</button>
+              <button className="btn" onClick={() => dl('xlsx')}><FileSpreadsheet size={14} /> Modelo XLSX</button>
+            </div>
+            <label>Arquivo (.csv / .xlsx)
+              <input type="file" accept=".csv,.xlsx" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+            </label>
+            <label>Senha inicial dos novos usuários
+              <input value={pw} onChange={e => setPw(e.target.value)} />
+            </label>
+            {err && <div className="login-error">{err}</div>}
+            <div className="modal-actions">
+              <button className="btn" onClick={onClose}>Cancelar</button>
+              <button className="btn btn-primary" disabled={!file || run.isPending} onClick={() => { setErr(null); run.mutate() }}>
+                {run.isPending ? <Loader2 size={15} className="spinning" /> : <>Importar</>}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Admin() {
   const navigate = useNavigate()
   const t = useT()
   const { lang } = useI18n()
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['admin-overview'], queryFn: getAdminOverview })
+  const { data: groups } = useQuery({ queryKey: ['adm-groups'], queryFn: adminListGroups })
+  const groupName = (k?: string) => groups?.find(g => g.key === k)?.name
   const [editing, setEditing] = useState<AdminUserRow | null>(null)
   const [creating, setCreating] = useState(false)
   const [inviting, setInviting] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const status = useMutation({
     mutationFn: ({ email, s }: { email: string; s: 'active' | 'suspended' }) => adminSetUserStatus(email, s),
@@ -247,9 +339,18 @@ export default function Admin() {
           <h1 className="hist-title">{t('admin.title')}</h1>
           <p className="muted hist-sub">{t('admin.sub', { m: data.pass_mark })}</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button className="btn" onClick={() => navigate('/admin/grupos')}>
+            <Users2 size={16} /> {t('nav.groups')}
+          </button>
+          <button className="btn" onClick={() => navigate('/admin/trilhas')}>
+            <Map size={16} /> {t('nav.tracks')}
+          </button>
           <button className="btn" onClick={() => navigate('/admin/activity')}>
             <Activity size={16} /> {t('admin.activityLog')}
+          </button>
+          <button className="btn" onClick={() => setImporting(true)}>
+            <Upload size={16} /> Importar planilha
           </button>
           <button className="btn" onClick={() => setInviting(true)}>
             <Link2 size={16} /> {t('admin.inviteUser')}
@@ -283,7 +384,11 @@ export default function Admin() {
                   <b>{u.name}</b>{u.is_admin && <span className="badge badge-associate" style={{ marginLeft: 6 }}>{t('admin.roleAdmin')}</span>}
                   <div className="muted" style={{ fontSize: 12 }}>{u.email}</div>
                 </td>
-                <td>{u.area || '—'}</td>
+                <td>
+                  {groupName(u.group_key)
+                    ? <span className="badge badge-fundamentos">{groupName(u.group_key)}</span>
+                    : (u.area || '—')}
+                </td>
                 <td><span className={`hist-badge ${u.status === 'active' ? 'ok' : 'no'}`}>
                   {u.status === 'active' ? t('admin.active') : t('admin.suspended')}</span></td>
                 <td>{u.attempts}</td>
@@ -312,6 +417,7 @@ export default function Admin() {
       {editing && <EditModal user={editing} onClose={() => setEditing(null)} />}
       {creating && <NewUserModal onClose={() => setCreating(false)} />}
       {inviting && <InviteModal onClose={() => setInviting(false)} />}
+      {importing && <BulkImportModal onClose={() => setImporting(false)} />}
     </div>
   )
 }

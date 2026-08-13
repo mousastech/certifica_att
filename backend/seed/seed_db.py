@@ -166,6 +166,28 @@ CREATE TABLE IF NOT EXISTS {schema}.invites (
     created_at  TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_invites_tenant ON {schema}.invites(tenant_id, created_at DESC);
+
+-- Grupos / áreas (personas): CDO, CSO, Finanças-Genie, etc. Cada grupo recebe
+-- um conjunto de trilhas (track_keys) e, opcionalmente, simulados (certification_ids).
+CREATE TABLE IF NOT EXISTS {schema}.groups (
+    id                TEXT PRIMARY KEY,
+    tenant_id         TEXT NOT NULL REFERENCES {schema}.tenants(id),
+    key               TEXT NOT NULL,
+    name              TEXT NOT NULL,
+    description       TEXT,
+    color             TEXT DEFAULT '#00A8E0',
+    icon              TEXT,
+    track_keys        JSONB DEFAULT '[]',   -- trilhas visíveis (keys em tenants.routes)
+    certification_ids JSONB DEFAULT '[]',   -- simulados visíveis; [] = derivado das trilhas
+    sort_order        INT DEFAULT 0,
+    created_at        TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (tenant_id, key)
+);
+CREATE INDEX IF NOT EXISTS idx_groups_tenant ON {schema}.groups(tenant_id, sort_order);
+
+-- Personalização por usuário: grupo (área) e trilhas extras específicas.
+ALTER TABLE {schema}.users ADD COLUMN IF NOT EXISTS group_key TEXT;
+ALTER TABLE {schema}.users ADD COLUMN IF NOT EXISTS extra_track_keys JSONB DEFAULT '[]';
 """
 
 
@@ -248,15 +270,49 @@ def run_seed():
                 )
             log.info(f"  banco global: {len(certs)} certs / {len(questions)} q / {len(flashcards)} fc")
 
-            # ── Tenants iniciais ───────────────────────────────────────────────
-            plat = _tenant(cur, schema, "platform", "Plataforma Certifica", "#EC0000", None, allow_reg=False)
-            sntdr = _tenant(cur, schema, "santander", "Santander", "#EC0000", "/sntdr-logo.png")
-            _user(cur, schema, plat, SUPERADMIN_EMAIL, "Moisés Santos", is_admin=True)
-            _user(cur, schema, sntdr, SUPERADMIN_EMAIL, "Moisés Santos", is_admin=True)
-            log.info(f"  tenants: platform={plat[:8]} santander={sntdr[:8]}")
-            log.info(f"  admin/superadmin {SUPERADMIN_EMAIL} (senha: {ADMIN_PW})")
+            # ── Tenant único AT&T ──────────────────────────────────────────────
+            att = _tenant(cur, schema, "att", "AT&T Certifica", "#00A8E0",
+                          "/att-logo.svg", allow_reg=False)
+            _user(cur, schema, att, SUPERADMIN_EMAIL, "Moisés Santos", is_admin=True)
+            log.info(f"  tenant único: att={att[:8]}")
+            log.info(f"  admin {SUPERADMIN_EMAIL} (senha: {ADMIN_PW})")
 
-    log.info("Seed multi-tenant concluído.")
+            # ── Trilhas + grupos AT&T ──────────────────────────────────────────
+            seed_att_tracks_and_groups(cur, schema, att)
+
+    log.info("Seed AT&T concluído.")
+
+
+def seed_att_tracks_and_groups(cur, schema, tenant_id):
+    """Semeia as trilhas (routes do tenant) e os grupos/áreas da AT&T.
+
+    Idempotente: só grava trilhas se o tenant ainda não tiver, e usa ON CONFLICT
+    nos grupos. Não sobrescreve customizações feitas pelo admin em runtime."""
+    from seed.att_content import ATT_TRACKS, ATT_GROUPS
+
+    # trilhas → tenants.routes (só se ainda vazio, para não pisar customizações)
+    cur.execute(f"SELECT routes FROM {schema}.tenants WHERE id=%s", (tenant_id,))
+    row = cur.fetchone()
+    existing = row[0] if row else None
+    if not existing:
+        cur.execute(f"UPDATE {schema}.tenants SET routes=%s WHERE id=%s",
+                    (json.dumps({"routes": ATT_TRACKS}), tenant_id))
+        log.info(f"  trilhas semeadas: {len(ATT_TRACKS)}")
+
+    # grupos
+    for g in ATT_GROUPS:
+        cur.execute(
+            f"INSERT INTO {schema}.groups "
+            "(id,tenant_id,key,name,description,color,icon,track_keys,certification_ids,sort_order) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+            "ON CONFLICT (tenant_id,key) DO NOTHING",
+            (str(uuid.uuid4()), tenant_id, g["key"], g["name"], g.get("description"),
+             g.get("color", "#00A8E0"), g.get("icon"),
+             json.dumps(g.get("track_keys", [])),
+             json.dumps(g.get("certification_ids", [])),
+             g.get("sort_order", 0)),
+        )
+    log.info(f"  grupos semeados: {len(ATT_GROUPS)}")
 
 
 def main():

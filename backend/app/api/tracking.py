@@ -221,7 +221,7 @@ async def admin_overview(admin: UserPublic = Depends(security.require_admin)):
     s = get_settings()
     rows = repo.get_admin_overview(admin.tenant_id)
     users = [AdminUserRow(
-        email=r["email"], name=r["name"], area=r.get("area"),
+        email=r["email"], name=r["name"], area=r.get("area"), group_key=r.get("group_key"),
         status=r.get("status", "active"), is_admin=r.get("is_admin", False),
         attempts=r["attempts"], best_score=r["best_score"], last_score=r["last_score"],
         passed_any=r["passed_any"], last_attempt_at=r["last_attempt_at"],

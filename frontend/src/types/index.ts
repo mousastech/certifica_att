@@ -209,8 +209,42 @@ export interface CertInfo {
 }
 
 export interface ClassItem { id: string; title: string; desc: string; type: string; level?: string; duration: string; free?: boolean; url?: string | null }
-export interface RouteItem { name: string; description: string; certification_id?: string | null; classes: ClassItem[] }
+export interface RouteItem { key?: string; name: string; description: string; icon?: string; color?: string; certification_id?: string | null; sim_cert_ids?: string[]; classes: ClassItem[] }
 export interface RoutesContent { routes: RouteItem[] }
+
+// ── Grupos / trilhas atribuídas / gamificação ─────────────────────────────────
+export interface Group {
+  id?: string; key: string; name: string; description?: string
+  color?: string; icon?: string; track_keys: string[]; certification_ids: string[]; sort_order?: number
+}
+export interface Badge { key: string; name: string; icon: string }
+export interface Gamification {
+  points: number; level: string; level_floor: number; next_level_at: number | null
+  classes_done: number; attempts: number; passed: number; badges: Badge[]
+}
+export interface MyTracks {
+  group: Group | null; tracks: RouteItem[]; sim_cert_ids: string[]; all_sims: boolean
+  gamification: Gamification
+}
+export interface GamiRow {
+  rank: number; email: string; name: string; area?: string; group_key?: string
+  points: number; level: string; classes_done: number; attempts: number; passed: number
+}
+export interface GamiLeaderboard { rows: GamiRow[]; groups: Group[]; group_key: string | null }
+export interface TrackEnrolled {
+  email: string; name: string; area?: string; group_key?: string
+  classes_done: number; classes_total: number; pct: number; attempts: number; passed: number
+}
+export interface TrackOverview {
+  key: string; name: string; icon?: string; color?: string; description?: string
+  classes_total: number; cert_ids: string[]; enrolled_count: number; avg_pct: number
+  completed_count: number; enrolled: TrackEnrolled[]
+}
+export interface TracksOverview { tracks: TrackOverview[]; groups: Group[] }
+export interface BulkResult {
+  created: number; updated: number; total: number
+  errors: { row: number; email: string; error: string }[]; default_password: string
+}
 
 export interface ProgramItem { title: string; desc: string; link?: string | null }
 export interface ProgramKpi { label: string; value: string }
@@ -267,6 +301,7 @@ export interface AdminUserRow {
   email: string
   name: string
   area?: string
+  group_key?: string
   status: string
   is_admin: boolean
   attempts: number

@@ -108,9 +108,13 @@ class ClassItem(BaseModel):
 
 
 class RouteItem(BaseModel):
+    key: str = ""                            # id estável da trilha (referenciado por grupos)
     name: str = ""
     description: str = ""
-    certification_id: Optional[str] = None   # certificación objetivo (del banco global)
+    icon: str = ""                           # nome do ícone (lucide) para a UI
+    color: str = ""                          # cor de acento da trilha
+    certification_id: Optional[str] = None   # certificação-alvo opcional (do banco global)
+    sim_cert_ids: List[str] = []             # simulados vinculados à trilha (opcional)
     classes: List[ClassItem] = []
 
 
@@ -435,6 +439,7 @@ class AdminUserRow(BaseModel):
     email: str
     name: str
     area: Optional[str] = None
+    group_key: Optional[str] = None
     status: str = "active"
     is_admin: bool = False
     attempts: int = 0

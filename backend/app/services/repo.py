@@ -413,15 +413,16 @@ def get_admin_overview(tenant_id: str) -> List[dict]:
             "BOOL_OR(s.passed) AS passed_any, MAX(s.created_at) AS last_at, "
             "(SELECT score_pct FROM test_sessions s2 WHERE s2.user_email=u.email "
             "  AND s2.tenant_id=u.tenant_id ORDER BY created_at DESC LIMIT 1) AS last_score, "
-            "u.area, u.status, u.is_admin "
+            "u.area, u.status, u.is_admin, u.group_key "
             "FROM users u LEFT JOIN test_sessions s "
             "  ON s.user_email=u.email AND s.tenant_id=u.tenant_id "
             "WHERE u.tenant_id=%s "
-            "GROUP BY u.tenant_id, u.email, u.name, u.area, u.status, u.is_admin "
+            "GROUP BY u.tenant_id, u.email, u.name, u.area, u.status, u.is_admin, u.group_key "
             "ORDER BY attempts DESC, u.name", (tenant_id,),
         ).fetchall()
     return [{
         "email": r[0], "name": r[1], "attempts": r[2], "best_score": r[3],
         "passed_any": bool(r[4]), "last_attempt_at": r[5].isoformat() if r[5] else None,
         "last_score": r[6], "area": r[7], "status": r[8] or "active", "is_admin": bool(r[9]),
+        "group_key": r[10],
     } for r in rows]

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { Map, ChevronRight, ExternalLink, Pencil, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
-import { getRoutes, getProgress, markClass, unmarkClass, getCertInfo } from '@/services/api'
+import { getMyTracks, getProgress, markClass, unmarkClass, getCertInfo } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
 import { useT } from '@/i18n'
 import type { ClassItem } from '@/types'
@@ -14,22 +14,28 @@ export default function Routes() {
   const t = useT()
   const qc = useQueryClient()
   const slug = user?.tenant_slug || ''
-  const { data, isLoading } = useQuery({ queryKey: ['routes', slug], queryFn: () => getRoutes(slug), enabled: !!slug })
-  const { data: prog } = useQuery({ queryKey: ['progress'], queryFn: getProgress, enabled: !!slug })
+  const { data, isLoading } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
+  const { data: prog } = useQuery({ queryKey: ['progress'], queryFn: getProgress })
   const done = new Set(prog?.completed ?? [])
   const toggle = useMutation({
     mutationFn: ({ id, on }: { id: string; on: boolean }) => on ? markClass(id) : unmarkClass(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['progress'] }); qc.invalidateQueries({ queryKey: ['leaderboard'] }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['progress'] })
+      qc.invalidateQueries({ queryKey: ['leaderboard'] })
+      qc.invalidateQueries({ queryKey: ['my-tracks'] })
+      qc.invalidateQueries({ queryKey: ['gami'] })
+    },
   })
   const [sel, setSel] = useState<number | null>(null)
-  const selCert = sel != null ? (data?.routes?.[sel]?.certification_id || '') : ''
+  const selCert = sel != null ? (data?.tracks?.[sel]?.certification_id || '') : ''
   const { data: certInfo } = useQuery({
     queryKey: ['certinfo', selCert], queryFn: () => getCertInfo(selCert), enabled: !!selCert,
   })
 
   if (isLoading || !data) return <div className="spinner" />
   const canEdit = user?.is_admin || user?.is_superadmin
-  const routes = data.routes || []
+  const routes = data.tracks || []
+  const group = data.group
   const route = sel != null ? routes[sel] : null
 
   return (
@@ -37,7 +43,11 @@ export default function Routes() {
       <div className="au-title-row">
         <div>
           <h1 className="hist-title"><Map size={20} style={{ verticalAlign: -3 }} /> {t('routes.title')}</h1>
-          <p className="muted hist-sub">{t('routes.pick')}</p>
+          <p className="muted hist-sub">
+            {group
+              ? <>Sua área: <b style={{ color: group.color || 'var(--brand-primary)' }}>{group.name}</b> · trilhas atribuídas para você</>
+              : t('routes.pick')}
+          </p>
         </div>
         {canEdit && (
           <button className="btn" onClick={() => navigate(`/rutas/editar${user?.is_superadmin && slug ? `?slug=${slug}` : ''}`)}>
