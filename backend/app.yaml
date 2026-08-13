@@ -1,0 +1,55 @@
+command:
+  - sh
+  - -c
+  - uvicorn app.main:app --host 0.0.0.0 --port ${DATABRICKS_APP_PORT:-8080}
+
+env:
+  - name: MOCK_MODE
+    value: "false"
+
+  # ── Lakebase (Postgres) — PG native login (usuário + senha do secret scope) ──
+  - name: PGHOST
+    value: "ep-muddy-truth-d15b8jwx.database.us-west-2.cloud.databricks.com"
+  - name: PGPORT
+    value: "5432"
+  - name: PGDATABASE
+    value: "databricks_postgres"
+  - name: PGUSER
+    value: "certifica_app"
+  - name: PGPASSWORD
+    valueFrom: pg-password
+  - name: PGSSLMODE
+    value: "require"
+  - name: PGSCHEMA
+    value: "certifica"
+
+  # ── Geração via LLM (Foundation Model API) ───────────────────────────────
+  # As chamadas de LLM usam OBO (token do usuário logado, via header
+  # X-Forwarded-Access-Token) — não o SP do app. Por isso Claude/GPT-5 funcionam:
+  # o acesso é o do usuário. Requer o scope 'serving.serving-endpoints' na
+  # User authorization do app (setado via `databricks apps update`).
+  - name: LLM_ENDPOINT
+    value: "databricks-claude-sonnet-4-5"
+  # Geração EM MASSA (simulado completo, questões IA): modelo rápido p/ caber no
+  # timeout de ingress (~60s) do Databricks Apps. Deep-dive/repair usam o de cima.
+  - name: LLM_ENDPOINT_FAST
+    value: "databricks-claude-haiku-4-5"
+
+  # ── Autenticação (JWT) ────────────────────────────────────────────────────
+  - name: ENABLE_JWT_AUTH
+    value: "true"
+  # JWT_SECRET vem do secret scope (resource 'jwt-secret' em databricks.yml) — não vai no git.
+  - name: JWT_SECRET
+    valueFrom: jwt-secret
+  - name: SUPERADMIN_EMAILS
+    value: "moises.santos@databricks.com"
+  - name: PASS_MARK
+    value: "70"
+
+  # Seed idempotente no primeiro boot (cria schema multi-tenant + banco global + tenant platform).
+  # Desligado após o primeiro seed bem-sucedido (banco já populado).
+  - name: SEED_ON_STARTUP
+    value: "false"
+
+  - name: CORS_ORIGINS
+    value: "https://*.databricksapps.com,https://dbc-d2d6bce9-5b8e.cloud.databricks.com"

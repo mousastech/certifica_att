@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certifica — One AI tutor per learner</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Certifica — internal pitch deck
+   Self-contained: no network, no build. Arrow keys / scroll to navigate.
+   Screenshots are embedded as base64 (see SHOTS at the bottom) and wired by
+   [data-shot]. Chart colors come from the validated dark categorical palette;
+   mastery states use the reserved status palette with icon + label.
+   Customer PII in the two admin screenshots is blurred at the pixel level.
+   ═══════════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  color-scheme: dark;
+  --bg:          #0d0e11;
+  --surface-1:   #14161a;
+  --surface-2:   #1b1e24;
+  --surface-3:   #22262e;
+  --border:      #2a2e37;
+  --border-soft: #1f232b;
+
+  --text-primary:   #f5f6f8;
+  --text-secondary: #a8adb8;
+  --text-muted:     #757c8a;
+
+  /* brand accent (Databricks lava) — UI chrome only, never a data series */
+  --accent:      #ff3621;
+  --accent-warm: #ff7a45;
+  --accent-pale: rgba(255, 54, 33, 0.10);
+
+  /* validated dark categorical slots */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+
+  /* reserved status palette (fixed) */
+  --good:     #0ca30c;
+  --warning:  #fab219;
+  --critical: #d03b3b;
+
+  --maxw: 1120px;
+  --radius: 14px;
+  --radius-lg: 20px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+/* ── progress + slide counter ───────────────────────────────────────────── */
+.progress {
+  position: fixed; top: 0; left: 0; height: 2px; z-index: 100;
+  background: linear-gradient(90deg, var(--accent), var(--accent-warm));
+  width: 0; transition: width 0.15s linear;
+}
+.counter {
+  position: fixed; bottom: 22px; right: 24px; z-index: 100;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+  color: var(--text-muted); background: rgba(13,14,17,0.82);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: 100px;
+  padding: 7px 14px; font-variant-numeric: tabular-nums;
+}
+.hint {
+  position: fixed; bottom: 22px; left: 24px; z-index: 100;
+  font-size: 11.5px; color: var(--text-muted);
+  background: rgba(13,14,17,0.82); backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px;
+  transition: opacity 0.4s ease;
+}
+kbd {
+  font: inherit; font-size: 10.5px; font-weight: 700;
+  border: 1px solid var(--border); border-bottom-width: 2px;
+  border-radius: 4px; padding: 1px 5px; color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+/* ── section shell ──────────────────────────────────────────────────────── */
+section {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 88px 32px; position: relative;
+  /* contém os glows decorativos, que senão estouram a largura da página */
+  overflow: hidden;
+}
+.wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; position: relative; z-index: 1; }
+.wrap-wide { max-width: 1280px; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 22px;
+}
+.eyebrow::before {
+  content: ''; width: 22px; height: 1.5px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+h1 {
+  font-size: clamp(38px, 6.2vw, 76px); font-weight: 800;
+  line-height: 1.03; letter-spacing: -0.032em; margin-bottom: 26px;
+  text-wrap: balance;
+}
+h2 {
+  font-size: clamp(28px, 3.9vw, 45px); font-weight: 800;
+  line-height: 1.12; letter-spacing: -0.024em; margin-bottom: 20px;
+  text-wrap: balance;
+}
+h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 9px; }
+.lede {
+  font-size: clamp(16.5px, 1.85vw, 21px); color: var(--text-secondary);
+  max-width: 68ch; line-height: 1.62;
+}
+.lede strong { color: var(--text-primary); font-weight: 600; }
+.gradient {
+  background: linear-gradient(115deg, #fff 8%, var(--accent-warm) 58%, var(--accent) 96%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── glow backdrop ──────────────────────────────────────────────────────── */
+.glow {
+  position: absolute; border-radius: 50%; filter: blur(110px);
+  pointer-events: none; z-index: 0;
+}
+.glow-a { width: 620px; height: 620px; top: -190px; right: -160px;
+          background: rgba(255, 54, 33, 0.14); }
+.glow-b { width: 520px; height: 520px; bottom: -180px; left: -140px;
+          background: rgba(57, 135, 229, 0.11); }
+
+/* ── cards ──────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 26px;
+}
+.card-accent { border-left: 3px solid var(--accent); }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g4 { grid-template-columns: repeat(4, 1fr); }
+
+.icon {
+  width: 42px; height: 42px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-pale); color: var(--accent);
+  margin-bottom: 16px; flex-shrink: 0;
+}
+.card p { color: var(--text-secondary); font-size: 14.5px; }
+
+/* ── SCREENSHOT FRAME ───────────────────────────────────────────────────────
+   Os prints são de UI clara sobre um deck escuro: uma moldura de "janela"
+   (barra + pontos) dá contorno e evita que o branco flutue solto no fundo.
+   A imagem entra em blocos de proporção fixa para não pular no carregamento. */
+.shot {
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: 0 18px 46px rgba(0,0,0,0.55), 0 3px 10px rgba(0,0,0,0.4);
+}
+.shot-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 12px; background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+}
+.shot-dot { width: 9px; height: 9px; border-radius: 50%; background: #43464f; flex-shrink: 0; }
+.shot-url {
+  margin-left: 8px; font-size: 10.5px; color: var(--text-muted);
+  letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.shot img { display: block; width: 100%; height: auto; }
+/* recorta a base do print quando a tabela segue abaixo do corte */
+.shot-crop { max-height: 420px; overflow: hidden; position: relative; }
+.shot-crop::after {
+  content: ''; position: absolute; inset: auto 0 0 0; height: 64px;
+  background: linear-gradient(to bottom, transparent, rgba(13,14,17,0.85));
+  pointer-events: none;
+}
+.shot-cap {
+  font-size: 12.5px; color: var(--text-muted); margin-top: 11px; line-height: 1.5;
+}
+.shot-cap b { color: var(--text-secondary); font-weight: 600; }
+
+/* legenda numerada que aponta para partes do print */
+.callouts { list-style: none; display: grid; gap: 13px; }
+.callouts li { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; color: var(--text-secondary); }
+.callouts .n {
+  flex-shrink: 0; width: 23px; height: 23px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 11.5px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.callouts b { color: var(--text-primary); font-weight: 600; }
+
+/* layout print + texto */
+.split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 34px; align-items: center; }
+.split-rev { grid-template-columns: 1fr 1.15fr; }
+
+/* ── stat tiles (label · value · caption) ───────────────────────────────── */
+.stat {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px 20px;
+}
+.stat-label {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  letter-spacing: 0.02em; margin-bottom: 8px;
+}
+.stat-value {
+  font-size: 40px; font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1; color: var(--text-primary);
+}
+.stat-cap { font-size: 12.5px; color: var(--text-muted); margin-top: 9px; }
+
+/* ── the loop (process, not a chart) ────────────────────────────────────── */
+.loop { display: grid; gap: 13px; grid-template-columns: repeat(5, 1fr); }
+.step {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 18px; position: relative;
+  display: flex; flex-direction: column;
+}
+.step-n {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+  color: var(--accent); margin-bottom: 11px;
+}
+.step h3 { font-size: 15.5px; margin-bottom: 7px; }
+.step p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.step-ai {
+  margin-top: auto; padding-top: 13px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.05em; color: var(--series-1);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+/* ── mastery states: status palette + icon + label (never color alone) ──── */
+.mastery { display: grid; gap: 11px; }
+.m-row { display: grid; grid-template-columns: 190px 1fr 62px; align-items: center; gap: 16px; }
+.m-topic { font-size: 14px; color: var(--text-secondary); }
+.m-track { height: 10px; border-radius: 100px; background: var(--surface-3); position: relative; overflow: hidden; }
+.m-fill { height: 100%; border-radius: 100px; }
+.m-pct { font-size: 13.5px; font-weight: 600; text-align: right; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.m-legend { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 22px; }
+.m-key { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+.m-key svg { flex-shrink: 0; }
+
+/* ── table (right form for 6 near-equal values) ─────────────────────────── */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 430px; }
+th {
+  text-align: left; font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted);
+  padding: 0 14px 13px; border-bottom: 1px solid var(--border);
+}
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td { padding: 14px; border-bottom: 1px solid var(--border-soft); color: var(--text-secondary); }
+tr:last-child td { border-bottom: none; }
+td.name { color: var(--text-primary); font-weight: 500; }
+tfoot td { font-weight: 700; color: var(--text-primary); border-top: 1px solid var(--border); }
+.lvl { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; padding: 3px 9px; border-radius: 100px; text-transform: uppercase; }
+.lvl-a { background: rgba(57,135,229,0.14); color: #8fc0f5; }
+.lvl-p { background: rgba(217,89,38,0.16); color: #f0a077; }
+
+/* ── quote / elevator pitch ─────────────────────────────────────────────── */
+.pitch {
+  background: linear-gradient(150deg, var(--surface-2) 0%, var(--surface-1) 100%);
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg); padding: 38px 40px;
+}
+.pitch p { font-size: clamp(17px, 2vw, 22px); line-height: 1.62; color: var(--text-primary); }
+.pitch p + p { margin-top: 18px; }
+.pitch .mark { color: var(--accent-warm); font-weight: 600; }
+.pitch-meta {
+  margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border);
+  font-size: 12.5px; color: var(--text-muted); letter-spacing: 0.03em;
+}
+
+/* ── stack pills ────────────────────────────────────────────────────────── */
+.pills { display: flex; flex-wrap: wrap; gap: 9px; }
+.pill {
+  font-size: 12.5px; font-weight: 600; padding: 7px 14px;
+  border: 1px solid var(--border); border-radius: 100px;
+  background: var(--surface-1); color: var(--text-secondary);
+}
+.pill-hot { border-color: rgba(255,54,33,0.35); color: var(--accent-warm); background: var(--accent-pale); }
+
+/* ── lists ──────────────────────────────────────────────────────────────── */
+.checks { list-style: none; display: grid; gap: 13px; }
+.checks li { display: flex; gap: 13px; align-items: flex-start; font-size: 15px; color: var(--text-secondary); }
+.checks svg { flex-shrink: 0; margin-top: 3px; color: var(--good); }
+.checks b { color: var(--text-primary); font-weight: 600; }
+
+.note { font-size: 12.5px; color: var(--text-muted); margin-top: 20px; max-width: 78ch; line-height: 1.55; }
+.divider { height: 1px; background: var(--border); margin: 34px 0; }
+
+.mt-s { margin-top: 16px; }
+.mt-m { margin-top: 26px; }
+.mt-l { margin-top: 40px; }
+
+/* ── short viewports ────────────────────────────────────────────────────── */
+@media (min-width: 901px) and (max-height: 980px) {
+  section { padding-top: 64px; padding-bottom: 64px; }
+  h1 { margin-bottom: 20px; }
+  h2 { margin-bottom: 16px; }
+  .eyebrow { margin-bottom: 16px; }
+  .mt-l { margin-top: 28px; }
+  .mt-m { margin-top: 20px; }
+  .divider { margin: 26px 0; }
+  .pitch { padding: 30px 34px; }
+  .split { gap: 26px; }
+}
+@media (min-width: 901px) and (max-height: 860px) {
+  section { padding-top: 48px; padding-bottom: 48px; }
+  .stat { padding: 17px 16px; }
+  .stat-value { font-size: 33px; }
+  .card { padding: 20px; }
+  .icon { margin-bottom: 11px; }
+  .mastery { gap: 7px; }
+  .m-legend { margin-top: 16px; }
+  td, th { padding-top: 10px; padding-bottom: 10px; }
+  .mt-l { margin-top: 22px; }
+  .lede { font-size: 16px; }
+  .shot-crop { max-height: 330px; }
+}
+@media (min-width: 901px) and (max-height: 730px) {
+  section { padding-top: 40px; padding-bottom: 40px; }
+  h1 { font-size: clamp(34px, 4.6vw, 54px); }
+  h2 { font-size: clamp(25px, 3vw, 34px); }
+  .lede { font-size: 15.5px; }
+  .stat-value { font-size: 29px; }
+  .pitch { padding: 24px 28px; }
+  .pitch p { font-size: 17px; }
+  .m-track { height: 8px; }
+  .shot-crop { max-height: 280px; }
+}
+
+/* ── responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  section { padding: 72px 20px; min-height: auto; }
+  .g4, .g3, .g2 { grid-template-columns: 1fr 1fr; }
+  .loop { grid-template-columns: 1fr 1fr; }
+  .split, .split-rev { grid-template-columns: 1fr; gap: 24px; }
+  .m-row { grid-template-columns: 128px 1fr 52px; gap: 11px; }
+  .hint { display: none; }
+  .pitch { padding: 26px 22px; }
+  .shot-crop { max-height: none; }
+  .shot-crop::after { display: none; }
+}
+@media (max-width: 560px) {
+  .g4, .g3, .g2, .loop { grid-template-columns: 1fr; }
+  .counter { bottom: 14px; right: 14px; }
+  .m-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "topic pct" "track track";
+    row-gap: 6px; margin-bottom: 4px;
+  }
+  .m-topic { grid-area: topic; }
+  .m-pct   { grid-area: pct; }
+  .m-track { grid-area: track; }
+  .m-legend { gap: 10px 18px; }
+  .shot-url { display: none; }
+}
+@media print {
+  .progress, .counter, .hint { display: none; }
+  section { min-height: auto; page-break-after: always; padding: 40px 0; }
+  .shot-crop { max-height: none; }
+}
+</style>
+</head>
+<body data-palette="#3987e5,#d95926,#199e70">
+
+<div class="progress" id="progress"></div>
+<div class="counter"><span id="cur">1</span> / <span id="tot">12</span></div>
+<div class="hint" id="hint"><kbd>↓</kbd> <kbd>↑</kbd> to navigate</div>
+
+<main class="deck">
+
+<!-- ══ 1 · HERO ══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+  <div class="wrap wrap-wide">
+    <div class="split">
+      <div>
+        <div class="eyebrow">Certifica · Field Engineering asset</div>
+        <h1>One AI tutor<br><span class="gradient">per learner.</span></h1>
+        <p class="lede" style="max-width:46ch">
+          A multi-tenant certification platform where every candidate gets a private,
+          adaptive assistant that <strong>finds their weak spots, teaches them, and
+          re-tests until they're mastered</strong> — grounded in official Databricks docs.
+        </p>
+        <div class="pills mt-m">
+          <span class="pill pill-hot">Live today</span>
+          <span class="pill">6 certifications</span>
+          <span class="pill">613 questions</span>
+          <span class="pill">3 languages</span>
+        </div>
+      </div>
+      <div>
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
+            <span class="shot-url">certifica · databricksapps.com</span>
+          </div>
+          <img data-shot="overview" alt="Certification overview: topics covered, practice test, flashcards and study resources">
+        </div>
+        <p class="shot-cap">Running in production, on a customer's own brand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2 · ELEVATOR PITCH ════════════════════════════════════════════════ -->
+<section>
+  <div class="glow glow-a" style="opacity:0.55"></div>
+  <div class="wrap">
+    <div class="eyebrow">The 30-second version</div>
+    <div class="pitch">
+      <p>
+        “Every account we work with wants their people Databricks-certified — and
+        every program stalls in the same place: <span class="mark">generic practice
+        tests don't know who's taking them.</span>
+      </p>
+      <p>
+        Certifica gives each candidate a <span class="mark">personal AI tutor.</span>
+        It watches how they answer, finds the exact objectives they're weak on,
+        explains why they got it wrong, teaches that objective with runnable code,
+        hands them a lab checklist, and re-tests only that gap — looping until the
+        topic is mastered.
+      </p>
+      <p>
+        It runs entirely on our own stack — Databricks Apps, Lakebase, Foundation
+        Model API — is <span class="mark">multi-tenant and brandable in runtime</span>,
+        and it's already live with a real customer cohort. Any account, any
+        certification, no rebuild.”
+      </p>
+      <div class="pitch-meta">Elevator pitch · Certifica · Field Engineering</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3 · PROBLEM ═══════════════════════════════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Why certification programs stall</div>
+    <h2>Enablement is a funnel<br>that leaks at the same four points.</h2>
+    <div class="grid g2 mt-m">
+      <div class="card">
+        <div class="icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </div>
+        <h3>Nobody knows what they don't know</h3>
+        <p>A single score of “68%” tells a candidate they failed. It doesn't tell
+        them <em>which objective</em> to study tonight, so they re-read everything
+        — or nothing.</p>
+      </div>
+      <div class="card">
+        <div class="icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </div>
+        <h3>Question banks go stale</h3>
+        <p>Our platform renames products every quarter. Static PDFs of practice
+        questions start teaching <em>Delta Live Tables</em> and <em>Workflows</em>
+        the week after we rename them.</p>
+      </div>
+      <div class="card">
+        <div class="icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
+        </div>
+        <h3>Program owners fly blind</h3>
+        <p>The sponsor who signed off on 90 seats can't answer “who is actually
+        ready?” until exam day — which is exactly when it's too late to intervene.</p>
+      </div>
+      <div class="card">
+        <div class="icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 9l6 6M15 9l-6 6"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+        <h3>Practice ≠ passing</h3>
+        <p>Memorizing answers clears a mock test and fails the real one. Official
+        exams are scenario-based; the gap only closes with hands-on work.</p>
+      </div>
+    </div>
+    <p class="note">
+      Certifica is built around the official <em>AI Prep Guide: Any Databricks
+      Certification</em> — including its anti-hallucination safeguards and its
+      renamed-product table, injected into every prompt.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 4 · THE JOURNEY (print: Program) ══════════════════════════════════ -->
+<section>
+  <div class="glow glow-b" style="opacity:0.6"></div>
+  <div class="wrap wrap-wide">
+    <div class="eyebrow">Where the learner lands</div>
+    <h2>A program, not a question bank.</h2>
+    <div class="split mt-m">
+      <div>
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
+            <span class="shot-url">certifica · /program</span>
+          </div>
+          <div class="shot-crop">
+            <img data-shot="program" alt="Program page: progress bar, why join, and the learn/practice/certify journey">
+          </div>
+        </div>
+      </div>
+      <div>
+        <ol class="callouts">
+          <li><span class="n">1</span><span><b>Their own progress, first thing.</b>
+            Classes completed and certifications earned against the program's target
+            — so the learner always knows where they stand.</span></li>
+          <li><span class="n">2</span><span><b>Why this matters to them.</b> The
+            program's value proposition, written by the customer and editable per
+            tenant — not our copy.</span></li>
+          <li><span class="n">3</span><span><b>Learn → practice → certify.</b> A
+            three-step journey that ends at the real thing: proctored registration
+            on Webassessor.</span></li>
+        </ol>
+        <p class="shot-cap mt-s">
+          <b>Why it matters:</b> the platform frames certification as a path with a
+          finish line, which is what keeps a 60-person cohort moving after week two.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5 · PERSONALIZED ASSISTANT (mastery model) ════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">The core of the product</div>
+    <h2>The assistant is personal<br>because the <span class="gradient">data is personal.</span></h2>
+    <p class="lede">
+      Every answer a candidate submits is scored per objective and aggregated into
+      a live mastery model of <strong>that individual</strong>. Nothing is generic:
+      two people on the same certification see two different study plans.
+    </p>
+
+    <div class="card mt-m" style="padding:30px">
+      <h3 style="margin-bottom:4px">Topic mastery — one learner, one certification</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">
+        Schematic of the live model. Pass mark 70% · mastery 80%.
+      </p>
+      <div class="mastery">
+        <div class="m-row">
+          <div class="m-topic">Databricks SQL</div>
+          <div class="m-track"><div class="m-fill" style="width:92%;background:var(--good)"></div></div>
+          <div class="m-pct">92%</div>
+        </div>
+        <div class="m-row">
+          <div class="m-topic">Data Management</div>
+          <div class="m-track"><div class="m-fill" style="width:84%;background:var(--good)"></div></div>
+          <div class="m-pct">84%</div>
+        </div>
+        <div class="m-row">
+          <div class="m-topic">Visualization</div>
+          <div class="m-track"><div class="m-fill" style="width:74%;background:var(--warning)"></div></div>
+          <div class="m-pct">74%</div>
+        </div>
+        <div class="m-row">
+          <div class="m-topic">Analytics Applications</div>
+          <div class="m-track"><div class="m-fill" style="width:52%;background:var(--critical)"></div></div>
+          <div class="m-pct">52%</div>
+        </div>
+        <div class="m-row">
+          <div class="m-topic">SQL fundamentals</div>
+          <div class="m-track"><div class="m-fill" style="width:41%;background:var(--critical)"></div></div>
+          <div class="m-pct">41%</div>
+        </div>
+      </div>
+      <div class="m-legend">
+        <span class="m-key">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Mastered — ≥ 80%
+        </span>
+        <span class="m-key">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          Improving — 70–79%
+        </span>
+        <span class="m-key">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--critical)" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          Weak — &lt; 70%, targeted first
+        </span>
+      </div>
+      <div class="divider"></div>
+      <div class="grid g3">
+        <div>
+          <h3 style="font-size:15px">Trend, not a snapshot</h3>
+          <p style="font-size:13.5px">First attempt vs. most recent per topic —
+          so the plan shows whether studying is <em>working</em>.</p>
+        </div>
+        <div>
+          <h3 style="font-size:15px">Error → training</h3>
+          <p style="font-size:13.5px">AI maps each weak objective to the specific
+          classes in the customer's own learning path that cover it.</p>
+        </div>
+        <div>
+          <h3 style="font-size:15px">Re-test the gap only</h3>
+          <p style="font-size:13.5px">A 6-question focused quiz on that one topic,
+          generated on demand — not another full mock exam.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6 · FIVE SURFACES (print: tabs) ═══════════════════════════════════ -->
+<section>
+  <div class="wrap wrap-wide">
+    <div class="eyebrow">One certification, five ways in</div>
+    <h2>Everything a candidate needs,<br>behind five tabs.</h2>
+    <div class="shot mt-m" style="box-shadow:0 14px 36px rgba(0,0,0,0.5)">
+      <img data-shot="tabs" alt="The five tabs: Overview, Practice test, Flashcards, Study with AI, Study plan">
+    </div>
+    <div class="grid g4 mt-m">
+      <div class="card" style="padding:20px">
+        <h3 style="font-size:15px">Practice test</h3>
+        <p style="font-size:13.5px">5–60 questions, any topic mix, graded with
+        explanations. Optionally all-new questions from AI.</p>
+      </div>
+      <div class="card" style="padding:20px">
+        <h3 style="font-size:15px">Flashcards</h3>
+        <p style="font-size:13.5px">200 curated cards for fast recall between
+        heavier study sessions.</p>
+      </div>
+      <div class="card" style="padding:20px">
+        <h3 style="font-size:15px">Study with AI</h3>
+        <p style="font-size:13.5px">Deep dive into one objective, plus a
+        hands-on lab checklist with docs links.</p>
+      </div>
+      <div class="card" style="padding:20px">
+        <h3 style="font-size:15px">Study plan</h3>
+        <p style="font-size:13.5px">The adaptive plan: weak topics first, mapped
+        to classes, with a focused re-test.</p>
+      </div>
+    </div>
+    <p class="note">
+      Overview carries the exam guide, the official topic list and curated study
+      resources — so the candidate never has to leave to find the source material.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 7 · PRACTICE + MOCK EXAM (print: practice test) ═══════════════════ -->
+<section>
+  <div class="glow glow-a" style="opacity:0.5"></div>
+  <div class="wrap wrap-wide">
+    <div class="eyebrow">Step 1–2 · diagnose and practice</div>
+    <h2>A mock exam weighted like<br>the <span class="gradient">real one.</span></h2>
+    <div class="split split-rev mt-m">
+      <div>
+        <ol class="callouts">
+          <li><span class="n">1</span><span><b>Pick the topics, pick the length.</b>
+            5 to 60 questions across any mix of the certification's official topics.</span></li>
+          <li><span class="n">2</span><span><b>Or generate all-new questions.</b>
+            One checkbox and the bank is no longer a fixed set — scenario-based
+            questions written on demand.</span></li>
+          <li><span class="n">3</span><span><b>Full mock exam.</b> The real question
+            count, distributed across exam-guide domains <em>by their published
+            weights</em> — so a weak domain can't hide behind an easy one.</span></li>
+        </ol>
+        <p class="shot-cap mt-s">
+          <b>Why it matters:</b> the diagnostic is what makes everything downstream
+          personal. No mock exam, no mastery model, no plan.
+        </p>
+      </div>
+      <div>
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
+            <span class="shot-url">certifica · practice test</span>
+          </div>
+          <div class="shot-crop">
+            <img data-shot="practice" alt="Configure practice test: topic pills, question count slider, AI generation checkbox, full mock exam">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 8 · STUDY WITH AI (print: study ai) ═══════════════════════════════ -->
+<section>
+  <div class="wrap wrap-wide">
+    <div class="eyebrow">Step 3–5 · repair, teach, practice for real</div>
+    <h2>The tutor doesn't just grade.<br>It teaches.</h2>
+    <div class="split mt-m">
+      <div>
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
+            <span class="shot-url">certifica · study with AI</span>
+          </div>
+          <div class="shot-crop">
+            <img data-shot="studyai" alt="Study with AI: deep dive into an objective and generate a hands-on checklist">
+          </div>
+        </div>
+      </div>
+      <div>
+        <ol class="callouts">
+          <li><span class="n">1</span><span><b>Deep dive into an objective.</b> Core
+            concept, how it works, when to use it, the common mistakes — and a runnable
+            code example, cited from official Databricks sources.</span></li>
+          <li><span class="n">2</span><span><b>Hands-on checklist.</b> “Reading alone
+            will not pass the exam.” 6–10 tasks the candidate must be able to perform,
+            each with steps and an official docs link, each under 30 min in Free Edition.</span></li>
+        </ol>
+        <p class="shot-cap mt-s">
+          <b>Why it matters:</b> this is the answer to <em>practice ≠ passing</em>.
+          The checklist pushes the learner out of the quiz and into a real workspace,
+          which is what the scenario-based exam actually tests.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 9 · THE AI LOOP ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">How the assistant works</div>
+    <h2>Five AI steps, one closed loop.</h2>
+    <p class="lede">Each step is a separate call to the Foundation Model API with
+    its own tutoring system prompt — not one chatbot pretending to do everything.</p>
+    <div class="loop mt-m">
+      <div class="step">
+        <div class="step-n">STEP 1</div>
+        <h3>Diagnose</h3>
+        <p>A full mock exam, with questions allocated across the official exam-guide
+        domains by their real weights.</p>
+        <div class="step-ai">◆ AI-generated</div>
+      </div>
+      <div class="step">
+        <div class="step-n">STEP 2</div>
+        <h3>Practice</h3>
+        <p>Scenario-based questions on chosen topics and difficulty — from the
+        curated bank or generated fresh.</p>
+        <div class="step-ai">◆ AI-generated</div>
+      </div>
+      <div class="step">
+        <div class="step-n">STEP 3</div>
+        <h3>Repair</h3>
+        <p>For every wrong answer: what the misconception was, why the right answer
+        is right, and why the distractor was tempting.</p>
+        <div class="step-ai">◆ AI-tutored</div>
+      </div>
+      <div class="step">
+        <div class="step-n">STEP 4</div>
+        <h3>Deep dive</h3>
+        <p>Teaches one weak objective end to end — core concept, how it shows up on
+        the exam, runnable code example.</p>
+        <div class="step-ai">◆ AI-tutored</div>
+      </div>
+      <div class="step">
+        <div class="step-n">STEP 5</div>
+        <h3>Hands-on</h3>
+        <p>6–10 lab tasks the candidate must be able to perform, each with steps and
+        an official docs link.</p>
+        <div class="step-ai">◆ AI-tutored</div>
+      </div>
+    </div>
+    <p class="note">
+      The loop closes: results from steps 1–2 update the mastery model, which selects
+      what steps 3–5 teach next, which feeds the next focused re-test. <strong
+      style="color:var(--text-secondary)">The sixth AI flow</strong> maps weak topics
+      to the customer's own training classes.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 10 · GROUNDING / TRUST ════════════════════════════════════════════ -->
+<section>
+  <div class="glow glow-a" style="opacity:0.5"></div>
+  <div class="wrap">
+    <div class="eyebrow">Why we can trust what it teaches</div>
+    <h2>An AI tutor that invents<br>an exam objective is <span class="gradient">worse than none.</span></h2>
+    <div class="grid g2 mt-m">
+      <div class="card card-accent">
+        <h3>Docs allowlist, not free recall</h3>
+        <p>Deep-dive prompts are grounded in a versioned snapshot of the official
+        <code>docs.databricks.com/llms.txt</code> index. The model may cite
+        <em>only</em> from that real page list — it cannot guess a plausible URL.</p>
+      </div>
+      <div class="card card-accent">
+        <h3>Renamed-product table injected</h3>
+        <p>Nine known renames (DLT → Lakeflow Declarative Pipelines, Workflows →
+        Lakeflow Jobs, Repos → Git folders…) are pushed into every system prompt.
+        This blocks the single most common hallucination.</p>
+      </div>
+      <div class="card card-accent">
+        <h3>Explicit anti-invention rules</h3>
+        <p>The prompt forbids inventing objectives, features or products outside
+        certification scope, and forbids third-party blogs and forums as sources.</p>
+      </div>
+      <div class="card card-accent">
+        <h3>Human-reviewed floor</h3>
+        <p>613 curated questions and 200 flashcards ship as the baseline, so the
+        product is useful and correct even before a single AI call.</p>
+      </div>
+    </div>
+    <div class="pills mt-m">
+      <span class="pill pill-hot">Foundation Model API</span>
+      <span class="pill pill-hot">Claude Opus 4.8</span>
+      <span class="pill">Databricks Apps</span>
+      <span class="pill">Lakebase (Postgres)</span>
+      <span class="pill">Unity Catalog</span>
+      <span class="pill">FastAPI</span>
+      <span class="pill">React + TypeScript</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 11 · SPONSOR TELEMETRY (prints: admin + activity) ═════════════════ -->
+<section>
+  <div class="wrap wrap-wide">
+    <div class="eyebrow">What the program sponsor gets</div>
+    <h2>“Who is actually ready?”<br>Answerable any day.</h2>
+    <div class="grid g2 mt-m">
+      <div>
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
+            <span class="shot-url">certifica · /admin</span>
+          </div>
+          <div class="shot-crop">
+            <img data-shot="admin" alt="Admin panel: users, attempts, already passed, and per-trainee tracking table">
+          </div>
+        </div>
+        <p class="shot-cap"><b>Admin panel.</b> Live cohort tracking: users, attempts,
+        how many already passed, and per-person best score and last access — with
+        user management and PDF/CSV export.</p>
+      </div>
+      <div>
+        <div class="shot">
+          <div class="shot-bar">
+            <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
+            <span class="shot-url">certifica · /admin/activity</span>
+          </div>
+          <div class="shot-crop">
+            <img data-shot="activity" alt="Access and activity log: events, logins, active users, and an audit trail">
+          </div>
+        </div>
+        <p class="shot-cap"><b>Access and activity log.</b> A full audit trail —
+        logins, tests submitted with scores, classes completed — scoped to the tenant
+        and exportable to CSV.</p>
+      </div>
+    </div>
+    <p class="note">
+      Real numbers from the live cohort, captured this week: <strong
+      style="color:var(--text-secondary)">69 users · 77 attempts · 10 already passed ·
+      126 audit events · 46 logins and 18 active users in 7 days.</strong>
+      Trainee names, emails and IPs are blurred here — this is a customer's data.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 12 · WHAT SHIPS ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">What ships today</div>
+    <h2>Six certifications, curated and live.</h2>
+    <div class="card mt-m table-scroll" style="padding:26px 12px">
+      <table>
+        <thead>
+          <tr>
+            <th>Certification</th>
+            <th>Level</th>
+            <th class="num">Questions</th>
+            <th class="num">Topics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Data Engineer Associate</td><td><span class="lvl lvl-a">Associate</span></td><td class="num">100</td><td class="num">5</td></tr>
+          <tr><td class="name">Data Engineer Professional</td><td><span class="lvl lvl-p">Professional</span></td><td class="num">100</td><td class="num">6</td></tr>
+          <tr><td class="name">Data Analyst Associate</td><td><span class="lvl lvl-a">Associate</span></td><td class="num">110</td><td class="num">5</td></tr>
+          <tr><td class="name">Machine Learning Associate</td><td><span class="lvl lvl-a">Associate</span></td><td class="num">105</td><td class="num">4</td></tr>
+          <tr><td class="name">Machine Learning Professional</td><td><span class="lvl lvl-p">Professional</span></td><td class="num">98</td><td class="num">4</td></tr>
+          <tr><td class="name">Generative AI Engineer Associate</td><td><span class="lvl lvl-a">Associate</span></td><td class="num">100</td><td class="num">6</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td class="name">Total</td><td>+ 200 flashcards</td><td class="num">613</td><td class="num">30</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="grid g4 mt-m">
+      <div class="stat">
+        <div class="stat-label">Live trainees</div>
+        <div class="stat-value">69</div>
+        <div class="stat-cap">Customer cohort, one tenant</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Interface languages</div>
+        <div class="stat-value">3</div>
+        <div class="stat-cap">Spanish · Portuguese · English</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Question bank ceiling</div>
+        <div class="stat-value" style="font-size:28px">Unlimited</div>
+        <div class="stat-cap">Generated per topic and difficulty</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Tenant isolation</div>
+        <div class="stat-value" style="font-size:28px">Row-level</div>
+        <div class="stat-cap">Shared bank, private results</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 13 · MULTI-TENANT / SCALE ═════════════════════════════════════════ -->
+<section>
+  <div class="glow glow-b" style="opacity:0.6"></div>
+  <div class="wrap">
+    <div class="eyebrow">Why this scales across the field</div>
+    <h2>One deployment.<br>Every account.</h2>
+    <p class="lede">
+      Certifica was built multi-tenant from day one. Onboarding a new customer is
+      configuration, <strong>not a fork</strong> — so the effort we spend improving
+      it compounds across every account instead of dying in one repo.
+    </p>
+    <ul class="checks mt-m">
+      <li>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>Runtime branding.</b> Color, logo and name are applied per tenant at
+        request time — a single build serves every customer, on their own brand.</span>
+      </li>
+      <li>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>Shared question bank, isolated results.</b> Certifications and questions
+        are global; users, sessions and answers carry a tenant ID. Improving content
+        lifts every customer at once.</span>
+      </li>
+      <li>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>Three access levels.</b> Platform operator (manage customers) · tenant
+        admin (manage their people, export PDF/CSV) · trainee (study). Self-service
+        signup optional per tenant.</span>
+      </li>
+      <li>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>It's a Databricks Apps reference implementation.</b> Every customer demo
+        doubles as a live proof point for Apps, Lakebase and the Foundation Model API.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══ 14 · THE ASK ══════════════════════════════════════════════════════ -->
+<section>
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+  <div class="wrap">
+    <div class="eyebrow">The ask</div>
+    <h2>Let's point it at the next<br><span class="gradient">enablement commitment.</span></h2>
+    <p class="lede">
+      Every certification commitment we make to an account is a place this already
+      fits. Three ways to move:
+    </p>
+    <div class="grid g3 mt-m">
+      <div class="card card-accent">
+        <div class="step-n">OPTION 1</div>
+        <h3>Land it on a live program</h3>
+        <p>Pick an account with an open certification commitment. Onboarding is a
+        tenant + a branding config — days, not a project.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="step-n">OPTION 2</div>
+        <h3>Make it a field asset</h3>
+        <p>Publish it as a supported internal offering so any SA can stand up a
+        branded tenant for their account without touching the code.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="step-n">OPTION 3</div>
+        <h3>Use it as an Apps proof point</h3>
+        <p>Lead with it in Apps, Lakebase and FMAPI conversations — a real
+        multi-tenant SaaS running end to end on our own platform.</p>
+      </div>
+    </div>
+    <div class="pitch mt-l">
+      <p style="font-size:clamp(19px,2.4vw,27px);font-weight:600;letter-spacing:-0.02em">
+        Certification isn't a training problem. It's a
+        <span class="mark">personalization problem</span> — and we already own
+        the stack that solves it.
+      </p>
+      <div class="pitch-meta">Certifica · built on Databricks Apps · Lakebase · Foundation Model API</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const SHOTS = {
+  program:  "assets/01-program.jpg",
+  overview: "assets/02-cert-overview.jpg",
+  practice: "assets/03-practice-test.jpg",
+  studyai:  "assets/04-study-ai.jpg",
+  admin:    "assets/05-admin-panel.jpg",
+  activity: "assets/06-activity-log.jpg",
+  tabs:     "assets/07-tabs.jpg"
+};
+
+// ── wire the embedded screenshots ───────────────────────────────────────────
+document.querySelectorAll('[data-shot]').forEach(el => {
+  const src = SHOTS[el.dataset.shot];
+  if (src) el.src = src;
+});
+
+// ── slide counter + progress bar ────────────────────────────────────────────
+const sections = [...document.querySelectorAll('section')];
+const progress = document.getElementById('progress');
+const cur = document.getElementById('cur');
+document.getElementById('tot').textContent = sections.length;
+
+function update() {
+  const h = document.documentElement;
+  const max = h.scrollHeight - h.clientHeight;
+  progress.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+  const mid = h.scrollTop + h.clientHeight / 2;
+  let i = sections.findIndex(s => s.offsetTop <= mid && s.offsetTop + s.offsetHeight > mid);
+  if (i < 0) i = h.scrollTop < 10 ? 0 : sections.length - 1;
+  cur.textContent = i + 1;
+}
+addEventListener('scroll', update, { passive: true });
+addEventListener('resize', update);
+update();
+
+// ── keyboard navigation ────────────────────────────────────────────────────
+const go = d => {
+  const mid = scrollY + innerHeight / 2;
+  let i = sections.findIndex(s => s.offsetTop <= mid && s.offsetTop + s.offsetHeight > mid);
+  if (i < 0) i = 0;
+  const next = sections[Math.min(sections.length - 1, Math.max(0, i + d))];
+  next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+addEventListener('keydown', e => {
+  if (['ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(1); }
+  if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1); }
+  if (e.key === 'Home') { e.preventDefault(); sections[0].scrollIntoView({ behavior: 'smooth' }); }
+  if (e.key === 'End') { e.preventDefault(); sections.at(-1).scrollIntoView({ behavior: 'smooth' }); }
+});
+
+// hint fades out once the deck is in motion
+const hint = document.getElementById('hint');
+addEventListener('scroll', () => {
+  if (scrollY > 120) { hint.style.opacity = '0'; }
+}, { passive: true });
+</script>
+</body>
+</html>
