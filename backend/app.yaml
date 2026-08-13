@@ -55,5 +55,11 @@ env:
   - name: SEED_ON_STARTUP
     value: "false"
 
+  # Sincroniza trilhas/grupos AT&T do att_content.py no boot (sobrescreve routes).
+  # Aplicado o catálogo de cursos Academy em 13-ago-2026 → DESLIGADO para não pisar
+  # edições futuras feitas no /admin/trilhas. Religar só para reaplicar o att_content.
+  - name: REFRESH_ATT_CONTENT
+    value: "false"
+
   - name: CORS_ORIGINS
     value: "https://*.databricksapps.com,https://fevm-moi-ai.cloud.databricks.com"

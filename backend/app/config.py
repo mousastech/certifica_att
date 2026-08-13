@@ -85,6 +85,13 @@ class Settings(BaseSettings):
     # Idempotente; útil para demos onde não há como rodar o seed localmente.
     SEED_ON_STARTUP: bool = False
 
+    # true = sobrescreve as trilhas (routes) e re-sincroniza os grupos do tenant
+    # 'att' a partir de seed/att_content.py no boot. Diferente do seed normal
+    # (que NÃO pisa customizações): esta flag FORÇA a atualização do catálogo de
+    # cursos. Ligar num deploy para aplicar e DESLIGAR em seguida, para não
+    # sobrescrever edições feitas em runtime no /admin/trilhas.
+    REFRESH_ATT_CONTENT: bool = False
+
     model_config = {"env_file": ".env", "case_sensitive": True, "extra": "ignore"}
 
 

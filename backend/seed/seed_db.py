@@ -315,6 +315,46 @@ def seed_att_tracks_and_groups(cur, schema, tenant_id):
     log.info(f"  grupos semeados: {len(ATT_GROUPS)}")
 
 
+def refresh_att_content():
+    """FORÇA a atualização do catálogo (trilhas + grupos) do tenant 'att' a partir
+    de seed/att_content.py, sobrescrevendo tenants.routes e re-sincronizando os
+    grupos (ON CONFLICT DO UPDATE). Diferente do seed normal, que preserva
+    customizações. Acionada por REFRESH_ATT_CONTENT=true no boot; desligar depois."""
+    from seed.att_content import ATT_TRACKS, ATT_GROUPS
+    s = get_settings()
+    schema = s.PGSCHEMA
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT id FROM {schema}.tenants WHERE slug=%s", ("att",))
+            row = cur.fetchone()
+            if not row:
+                log.warning("REFRESH_ATT_CONTENT: tenant 'att' não encontrado — pulando.")
+                return
+            tenant_id = row[0]
+
+            # trilhas → sobrescreve
+            cur.execute(f"UPDATE {schema}.tenants SET routes=%s WHERE id=%s",
+                        (json.dumps({"routes": ATT_TRACKS}), tenant_id))
+
+            # grupos → upsert (atualiza nome/descrição/cores/trilhas/ordem)
+            for g in ATT_GROUPS:
+                cur.execute(
+                    f"INSERT INTO {schema}.groups "
+                    "(id,tenant_id,key,name,description,color,icon,track_keys,certification_ids,sort_order) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                    "ON CONFLICT (tenant_id,key) DO UPDATE SET "
+                    "name=EXCLUDED.name, description=EXCLUDED.description, color=EXCLUDED.color, "
+                    "icon=EXCLUDED.icon, track_keys=EXCLUDED.track_keys, sort_order=EXCLUDED.sort_order",
+                    (str(uuid.uuid4()), tenant_id, g["key"], g["name"], g.get("description"),
+                     g.get("color", "#00A8E0"), g.get("icon"),
+                     json.dumps(g.get("track_keys", [])),
+                     json.dumps(g.get("certification_ids", [])),
+                     g.get("sort_order", 0)),
+                )
+    log.info(f"REFRESH_ATT_CONTENT: {len(ATT_TRACKS)} trilhas e {len(ATT_GROUPS)} grupos "
+             "sincronizados a partir de att_content.py.")
+
+
 def main():
     if get_settings().MOCK_MODE:
         log.error("MOCK_MODE=true — configure o .env para o Postgres antes de semear.")

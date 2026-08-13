@@ -53,6 +53,13 @@ async def lifespan(app: FastAPI):
                 run_seed()
             except Exception as e:
                 logger.warning(f"Seed no startup falhou: {e}")
+        if s.REFRESH_ATT_CONTENT:
+            try:
+                from seed.seed_db import refresh_att_content
+                logger.info("REFRESH_ATT_CONTENT=true — sincronizando trilhas/grupos AT&T...")
+                refresh_att_content()
+            except Exception as e:
+                logger.warning(f"Refresh do conteúdo AT&T falhou: {e}")
     yield
     if not s.MOCK_MODE:
         try:
