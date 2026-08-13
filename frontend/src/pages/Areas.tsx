@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { listAreas, getMyTracks } from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 import { useT } from '@/i18n'
 import type { Area } from '@/types'
 import './Program.css'
@@ -18,6 +19,7 @@ const iconFor = (name?: string) => ICONS[name || ''] || Layers
 export default function Areas() {
   const navigate = useNavigate()
   const t = useT()
+  const { user } = useAuth()
   const { data, isLoading } = useQuery({ queryKey: ['areas'], queryFn: listAreas })
   const { data: mine } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
 
@@ -25,8 +27,14 @@ export default function Areas() {
   const areas = data.areas || []
   const myKey = mine?.group?.key
   const myArea = areas.find(a => a.key === myKey)
-  const genie = areas.find(a => (a.track_keys || []).includes('genie_finanzas'))
-    || areas.find(a => a.key === 'finanzas')
+  const isAdmin = !!(user?.is_admin || user?.is_superadmin)
+  // Un usuario con área asignada ve SU área enfocada; admin/sin-grupo exploran todo.
+  const showAllAreas = isAdmin || !myArea
+  const hasGenie = (mine?.tracks || []).some(tr => tr.key === 'genie_finanzas')
+  const genie = (showAllAreas || hasGenie)
+    ? (areas.find(a => (a.track_keys || []).includes('genie_finanzas'))
+       || areas.find(a => a.key === 'finanzas'))
+    : undefined
 
   const goArea = (a: Area) => navigate(`/rutas?area=${encodeURIComponent(a.key)}`)
 
@@ -103,13 +111,15 @@ export default function Areas() {
         </section>
       )}
 
-      {/* Todas as áreas */}
-      <section className="prog-section">
-        <h2>{t('areas.explore')}</h2>
-        <div className="areas-grid">
-          {areas.map(a => <AreaCard key={a.key} a={a} />)}
-        </div>
-      </section>
+      {/* Todas as áreas (solo admin o usuarios sin grupo asignado) */}
+      {showAllAreas && (
+        <section className="prog-section">
+          <h2>{t('areas.explore')}</h2>
+          <div className="areas-grid">
+            {areas.map(a => <AreaCard key={a.key} a={a} />)}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

@@ -87,7 +87,7 @@
 @media (max-width: 640px) { .area-featured { flex-direction: column; align-items: flex-start; } }
 
 /* banner Genie em destaque */
-.genie-banner {
+.genie-banner, .card.genie-banner {
   position: relative; overflow: hidden; width: 100%; text-align: left; cursor: pointer;
   padding: 26px 28px; border-radius: 18px; border: none; color: #fff;
   background: linear-gradient(120deg, #0568AE 0%, #00A8E0 60%, #4fc3f7 100%);

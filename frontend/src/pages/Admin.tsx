@@ -103,7 +103,7 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
     if (membership && !seeded.current) {
       seeded.current = true
       setExtra(membership.extra_track_keys || [])
-      if (membership.group_key != null) setGroupKey(membership.group_key || '')
+      setGroupKey(membership.group_key || '')  // membership es la fuente autoritativa (incluye "sin grupo")
     }
   }, [membership])
   const selGroup = groups?.find(g => g.key === groupKey)
@@ -189,7 +189,7 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         {err && <div className="login-error">{err}</div>}
         <div className="modal-actions">
           <button className="btn" onClick={onClose}>{t('admin.cancel')}</button>
-          <button className="btn btn-primary" disabled={save.isPending || !memLoaded} onClick={() => { setErr(null); save.mutate() }}>
+          <button className="btn btn-primary" disabled={save.isPending} onClick={() => { setErr(null); save.mutate() }}>
             {save.isPending ? <Loader2 size={15} className="spinning" /> : t('admin.save')}
           </button>
         </div>
@@ -514,7 +514,7 @@ export default function Admin() {
         </table>
       </div>
 
-      {editing && <EditModal user={editing} onClose={() => setEditing(null)} />}
+      {editing && <EditModal key={editing.email} user={editing} onClose={() => setEditing(null)} />}
       {creating && <NewUserModal onClose={() => setCreating(false)} />}
       {inviting && <InviteModal onClose={() => setInviting(false)} />}
       {importing && <BulkImportModal onClose={() => setImporting(false)} />}

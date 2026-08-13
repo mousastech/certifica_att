@@ -161,7 +161,8 @@ def set_user_group_bulk(tenant_id: str, emails: list[str], group_key: Optional[s
             cur = conn.execute(
                 "UPDATE users SET group_key=%s WHERE tenant_id=%s AND email = ANY(%s)",
                 (gk, tenant_id, emails))
-            return cur.rowcount if cur.rowcount and cur.rowcount >= 0 else len(emails)
+            rc = cur.rowcount
+            return rc if rc is not None and rc >= 0 else len(emails)
     return 0
 
 
