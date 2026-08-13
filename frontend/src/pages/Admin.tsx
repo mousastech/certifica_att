@@ -9,6 +9,7 @@ import {
   getAdminOverview, adminCreateUser, adminUpdateUser, adminSetUserStatus,
   adminSetUserPassword, adminDeleteUser, adminInvite,
   adminBulkUsers, getUsersTemplate, adminListGroups, adminSetUserGroup,
+  getMyTracks, getCertifications,
 } from '@/services/api'
 import type { BulkResult } from '@/types'
 import { useT, useI18n } from '@/i18n'
@@ -91,6 +92,11 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
   const [err, setErr] = useState<string | null>(null)
   const isSelf = me?.email?.toLowerCase() === user.email.toLowerCase()
   const { data: groups } = useQuery({ queryKey: ['adm-groups'], queryFn: adminListGroups })
+  const { data: mine } = useQuery({ queryKey: ['my-tracks'], queryFn: getMyTracks })
+  const { data: certs } = useQuery({ queryKey: ['certs'], queryFn: getCertifications })
+  const selGroup = groups?.find(g => g.key === groupKey)
+  const trackName = (k: string) => mine?.tracks.find(tr => tr.key === k)?.name || k
+  const certName = (id: string) => certs?.find(c => c.id === id)?.name || id
 
   const save = useMutation({
     mutationFn: async () => {
@@ -113,12 +119,35 @@ function EditModal({ user, onClose }: { user: AdminUserRow; onClose: () => void 
         <p className="muted" style={{ marginBottom: 12 }}>{user.email}</p>
         <label>{t('admin.name')}<input value={name} onChange={e => setName(e.target.value)} /></label>
         <label>{t('admin.area')}<input value={area} onChange={e => setArea(e.target.value)} placeholder="—" /></label>
-        <label>Grupo (área)
+        <label>{t('admin.group')}
           <select value={groupKey} onChange={e => setGroupKey(e.target.value)}>
-            <option value="">— sem grupo (vê todas as trilhas) —</option>
+            <option value="">{t('admin.noGroup')}</option>
             {(groups ?? []).map(g => <option key={g.key} value={g.key}>{g.name}</option>)}
           </select>
         </label>
+        {selGroup && (
+          <div className="card" style={{ padding: 12, marginTop: 8, borderLeft: `3px solid ${selGroup.color || 'var(--brand-primary)'}` }}>
+            {selGroup.description && <p className="muted" style={{ fontSize: 12, margin: '0 0 8px' }}>{selGroup.description}</p>}
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 5 }}>{t('admin.groupWillSee')}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+              {(selGroup.track_keys?.length ?? 0) === 0
+                ? <span className="muted" style={{ fontSize: 12 }}>{t('admin.allTracks')}</span>
+                : selGroup.track_keys.map(k => (
+                    <span key={k} className="badge badge-fundamentos" style={{ fontSize: 11 }}>{trackName(k)}</span>
+                  ))}
+            </div>
+            {(selGroup.certification_ids?.length ?? 0) > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 5 }}>{t('admin.groupSims')}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {selGroup.certification_ids.map(id => (
+                    <span key={id} className="badge badge-associate" style={{ fontSize: 11 }}>{certName(id)}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         <label>{t('admin.newPassword')}<input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••" /></label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
           <input type="checkbox" checked={isAdmin} disabled={isSelf}

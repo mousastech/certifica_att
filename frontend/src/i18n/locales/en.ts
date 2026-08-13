@@ -156,6 +156,8 @@ export const en: Dict = {
     rankTitle: 'Engagement ranking', rankSub: 'Top 10 by number of attempts. Green bar = already passed.',
     passRate: 'Pass rate', engagement: 'Engagement', cut: 'cut {m}%',
     avgAttempts: '{n} attempts/participant',
+    group: 'Group (area)', noGroup: '— no group (sees all tracks) —',
+    groupWillSee: 'Will see these tracks', allTracks: 'All tracks', groupSims: 'Practice tests',
   },
   activity: {
     title: 'Access and activity log',

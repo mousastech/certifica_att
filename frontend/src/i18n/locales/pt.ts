@@ -156,6 +156,8 @@ export const pt: Dict = {
     rankTitle: 'Ranking de engajamento', rankSub: 'Top 10 por número de tentativas. Barra verde = já aprovado.',
     passRate: 'Taxa de aprovação', engagement: 'Engajamento', cut: 'corte {m}%',
     avgAttempts: '{n} tentativas/participante',
+    group: 'Grupo (área)', noGroup: '— sem grupo (vê todas as trilhas) —',
+    groupWillSee: 'Verá estas trilhas', allTracks: 'Todas as trilhas', groupSims: 'Simulados',
   },
   activity: {
     title: 'Log de acessos e atividades',

@@ -154,6 +154,8 @@ export const es = {
     rankTitle: 'Ranking de participación', rankSub: 'Top 10 por número de intentos. Barra verde = ya aprobado.',
     passRate: 'Tasa de aprobación', engagement: 'Participación', cut: 'corte {m}%',
     avgAttempts: '{n} intentos/participante',
+    group: 'Grupo (área)', noGroup: '— sin grupo (ve todas las rutas) —',
+    groupWillSee: 'Verá estas rutas', allTracks: 'Todas las rutas', groupSims: 'Simulacros',
   },
   activity: {
     title: 'Registro de accesos y actividades',
