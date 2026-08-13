@@ -33,7 +33,7 @@ ATT_TRACKS: list[dict] = [
         "icon": "Compass", "color": "#00A8E0", "certification_id": None, "sim_cert_ids": [],
         "classes": [
             _cls("fundamentos", 0, "Databricks Fundamentals", "fundamentos", "3h",
-                 "https://www.databricks.com/training/catalog/databricks-fundamentals-2299"),
+                 f"{_CATALOG}"),
             _cls("fundamentos", 1, "Databricks Fundamentals Accreditation", "fundamentos", "1h",
                  f"{_ACADEMY}learn/courses/2308/databricks-fundamentals-accreditation", "accreditation"),
             _cls("fundamentos", 2, "Lakehouse & Unity Catalog Overview", "fundamentos", "2h",
@@ -172,7 +172,7 @@ ATT_TRACKS: list[dict] = [
         "icon": "Rocket", "color": "#0568AE", "certification_id": None, "sim_cert_ids": [],
         "classes": [
             _cls("liderazgo", 0, "Databricks Fundamentals (visão de negócio)", "fundamentos", "3h",
-                 "https://www.databricks.com/training/catalog/databricks-fundamentals-2299"),
+                 f"{_CATALOG}"),
             _cls("liderazgo", 1, "Generative AI Fundamentals", "fundamentos", "1.5h",
                  "https://www.databricks.com/training/catalog/generative-ai-fundamentals-2252"),
             _cls("liderazgo", 2, "Data + AI Strategy para Executivos", "fundamentos", "1h",
