@@ -65,8 +65,9 @@ def decode_token(token: str) -> Optional[dict]:
 
 def _token_from_request(request: Request) -> Optional[str]:
     # O gateway do Databricks Apps consome o Authorization para o próprio OAuth,
-    # então o JWT do app trafega em X-Santander-Auth.
-    x = request.headers.get("X-Santander-Auth", "")
+    # então o JWT do app trafega num header próprio (X-Certifica-Auth). O nome
+    # legado X-Santander-Auth é aceito por compatibilidade com bundles antigos.
+    x = request.headers.get("X-Certifica-Auth") or request.headers.get("X-Santander-Auth", "")
     if x:
         return x[7:].strip() if x.startswith("Bearer ") else x.strip()
     auth = request.headers.get("Authorization", "")

@@ -30,9 +30,9 @@ export const clearTenantSlug = () => localStorage.removeItem(TENANT_KEY)
 api.interceptors.request.use(config => {
   const t = getToken()
   if (t) {
-    // X-Santander-Auth: o gateway do Databricks Apps consome o Authorization para o
+    // X-Certifica-Auth: o gateway do Databricks Apps consome o Authorization para o
     // próprio OAuth, então o JWT do app vai num header customizado (repassado intacto).
-    config.headers['X-Santander-Auth'] = `Bearer ${t}`
+    config.headers['X-Certifica-Auth'] = `Bearer ${t}`
     config.headers.Authorization = `Bearer ${t}`  // Azure App Service / local
   }
   return config

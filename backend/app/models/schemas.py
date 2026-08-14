@@ -1,5 +1,5 @@
 """
-Schemas Pydantic — Santander Certifica.
+Schemas Pydantic — AT&T Certifica.
 """
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field

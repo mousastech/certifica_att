@@ -1,11 +1,13 @@
 .PHONY: env-create env-remove install dev-backend dev-frontend dev build \
-        seed deploy-dev deploy-prod deploy-backend clean lint check-backend test test-backend
+        seed deploy deploy-backend clean lint check-backend test test-backend
 
-CONDA_ENV = santander-certifica
+CONDA_ENV = certifica-att
 CONDA_RUN = conda run -n $(CONDA_ENV) --no-capture-output
 
 # ─── Databricks Apps (deploy atual) ─────────────────────────────────────────────
-PROFILE ?= fe-vm-serverless-stable-cvpomp
+# AT&T Certifica vive em fevm-moi-ai (target de bundle 'moiai', app 'certifica_att').
+PROFILE ?= fevm-moi-ai
+TARGET  ?= moiai
 
 # ─── AWS (App Runner via ECR — host alternativo, não usado no deploy atual) ─────
 AWS_REGION ?= us-east-1
@@ -59,15 +61,10 @@ seed:
 
 # ─── Databricks Apps Deploy (deploy atual) ──────────────────────────────────────
 
-deploy-dev: build
-	@echo "Deploy para Databricks Apps (target: dev)..."
-	cd backend && databricks bundle deploy --target dev -p $(PROFILE)
-	cd backend && databricks bundle run --target dev santander_certifica -p $(PROFILE)
-
-deploy-prod: build
-	@echo "Deploy para Databricks Apps (target: prod)..."
-	cd backend && databricks bundle deploy --target prod -p $(PROFILE)
-	cd backend && databricks bundle run --target prod santander_certifica -p $(PROFILE)
+deploy: build
+	@echo "Deploy para Databricks Apps (target: $(TARGET), profile: $(PROFILE))..."
+	cd backend && databricks bundle deploy --target $(TARGET) -p $(PROFILE)
+	cd backend && databricks bundle run certifica_att --target $(TARGET) -p $(PROFILE)
 
 # ─── AWS Deploy (backend → ECR → App Runner — host alternativo) ─────────────────
 # Frontend pelo Amplify (amplify.yml). Não usado no deploy atual (Databricks Apps).

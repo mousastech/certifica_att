@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS {schema}.tenants (
     id                  TEXT PRIMARY KEY,
     slug                TEXT UNIQUE NOT NULL,
     name                TEXT NOT NULL,
-    primary_color       TEXT DEFAULT '#EC0000',
+    primary_color       TEXT DEFAULT '#00A8E0',
     logo_url            TEXT,
     pass_mark           INT DEFAULT 70,
     allow_self_register BOOLEAN DEFAULT TRUE,
@@ -204,11 +204,12 @@ def _tenant(cur, schema, slug, name, color, logo, allow_reg=True):
     return tid
 
 
-def _user(cur, schema, tid, email, name, is_admin):
+def _user(cur, schema, tid, email, name, is_admin, must_change=False):
+    # must_change=True força a troca da senha no 1º login (a senha de seed é pública).
     cur.execute(
-        f"INSERT INTO {schema}.users (tenant_id,email,name,password_hash,is_admin) "
-        "VALUES (%s,%s,%s,%s,%s) ON CONFLICT (tenant_id,email) DO NOTHING",
-        (tid, email.lower(), name, hash_password(ADMIN_PW), is_admin),
+        f"INSERT INTO {schema}.users (tenant_id,email,name,password_hash,is_admin,must_change_password) "
+        "VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (tenant_id,email) DO NOTHING",
+        (tid, email.lower(), name, hash_password(ADMIN_PW), is_admin, must_change),
     )
 
 
@@ -273,7 +274,8 @@ def run_seed():
             # ── Tenant único AT&T ──────────────────────────────────────────────
             att = _tenant(cur, schema, "att", "AT&T Certifica", "#00A8E0",
                           "/att-logo.svg", allow_reg=False)
-            _user(cur, schema, att, SUPERADMIN_EMAIL, "Moisés Santos", is_admin=True)
+            _user(cur, schema, att, SUPERADMIN_EMAIL, "Moisés Santos", is_admin=True,
+                  must_change=True)
             log.info(f"  tenant único: att={att[:8]}")
             log.info(f"  admin {SUPERADMIN_EMAIL} (senha: {ADMIN_PW})")
 

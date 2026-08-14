@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Map, ChevronRight, ExternalLink, Pencil, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
+import { Map, ChevronRight, ExternalLink, Pencil, ArrowRight, CheckCircle2, Circle, GraduationCap, X } from 'lucide-react'
 import { getMyTracks, listAreas, getProgress, markClass, unmarkClass, getCertInfo } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
 import { useT } from '@/i18n'
 import type { ClassItem } from '@/types'
 import './Program.css'
+
+// Portal de eLearning self-paced. Abrir uma vez estabelece a sessão no navegador;
+// depois cada aula (target="_blank") carrega já logada via cookie da Academy.
+const ACADEMY_URL = 'https://customer-academy.databricks.com/'
+const ACADEMY_ACK_KEY = 'certifica_academy_connected'
 
 export default function Routes() {
   const navigate = useNavigate()
@@ -40,6 +45,8 @@ export default function Routes() {
     },
   })
   const [sel, setSel] = useState<number | null>(null)
+  const [academyAck, setAcademyAck] = useState<boolean>(() => localStorage.getItem(ACADEMY_ACK_KEY) === '1')
+  const ackAcademy = () => { localStorage.setItem(ACADEMY_ACK_KEY, '1'); setAcademyAck(true) }
   const selCert = sel != null ? (data?.tracks?.[sel]?.certification_id || '') : ''
   const { data: certInfo } = useQuery({
     queryKey: ['certinfo', selCert], queryFn: () => getCertInfo(selCert), enabled: !!selCert,
@@ -77,6 +84,25 @@ export default function Routes() {
           </button>
         )}
       </div>
+
+      {!academyAck && (
+        <div className="card" style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: 16, marginBottom: 16, borderLeft: '3px solid var(--brand-primary)' }}>
+          <GraduationCap size={22} style={{ color: 'var(--brand-primary)', flexShrink: 0, marginTop: 2 }} />
+          <div style={{ flex: 1 }}>
+            <h4 style={{ margin: 0 }}>{t('routes.academyTitle')}</h4>
+            <p className="muted" style={{ fontSize: 13, margin: '4px 0 10px' }}>{t('routes.academyDesc')}</p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <a className="btn btn-primary" href={ACADEMY_URL} target="_blank" rel="noreferrer" onClick={ackAcademy}>
+                <ExternalLink size={15} /> {t('routes.academyCta')}
+              </a>
+              <button className="link-btn" onClick={ackAcademy}>{t('routes.academyDone')}</button>
+            </div>
+          </div>
+          <button className="link-btn" title={t('routes.academyDone')} style={{ color: 'var(--brand-text-muted)', flexShrink: 0 }} onClick={ackAcademy}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {routes.length === 0 ? (
         <p className="muted">{t('routes.empty')}</p>

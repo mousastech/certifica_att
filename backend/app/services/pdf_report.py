@@ -11,7 +11,7 @@ from typing import List
 
 from fpdf import FPDF
 
-ORANGE = (236, 0, 0)  # rojo Santander #EC0000
+BRAND = (0, 168, 224)  # azul AT&T #00A8E0
 GREEN = (46, 125, 50)
 RED = (198, 40, 40)
 GREY = (110, 110, 110)
@@ -35,15 +35,15 @@ def _fmt_date(iso: str | None) -> str:
 
 
 class _PDF(FPDF):
-    title_text = "Santander Certifica"
+    title_text = "AT&T Certifica"
 
     def header(self):
-        self.set_fill_color(*ORANGE)
+        self.set_fill_color(*BRAND)
         self.rect(0, 0, 210, 18, "F")
         self.set_y(5)
         self.set_font("Helvetica", "B", 14)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 8, _s("Santander Certifica  -  Reporte de Simulacro"), align="L")
+        self.cell(0, 8, _s("AT&T Certifica  -  Reporte de Simulacro"), align="L")
         self.ln(16)
         self.set_text_color(*DARK)
 
@@ -81,7 +81,7 @@ def build_attempt_pdf(meta: dict, answers: List[dict], pass_mark: int = 70) -> b
                       f"Preguntas repetidas de intentos anteriores: {meta.get('repeated_questions', 0)}"), ln=1)
     pdf.set_text_color(*DARK)
     pdf.ln(3)
-    pdf.set_draw_color(*ORANGE)
+    pdf.set_draw_color(*BRAND)
     pdf.set_line_width(0.5)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(4)
@@ -128,7 +128,7 @@ def build_repair_pdf(meta: dict, items: List[dict]) -> bytes:
     """PDF de 'Explicar meus erros' — para cada erro: equívoco, por que a
     correta é correta e uma questão relacionada para reforçar."""
     pdf = _PDF(orientation="P", unit="mm", format="A4")
-    pdf.title_text = "Santander Certifica - Explicaciones"
+    pdf.title_text = "AT&T Certifica - Explicaciones"
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
@@ -142,7 +142,7 @@ def build_repair_pdf(meta: dict, items: List[dict]) -> bytes:
         pdf.cell(0, 6, _s(f"Fecha: {_fmt_date(meta.get('created_at'))}"), ln=1)
     pdf.set_text_color(*DARK)
     pdf.ln(3)
-    pdf.set_draw_color(*ORANGE)
+    pdf.set_draw_color(*BRAND)
     pdf.set_line_width(0.5)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(4)

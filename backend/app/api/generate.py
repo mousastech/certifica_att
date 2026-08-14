@@ -25,6 +25,10 @@ from app.services.llm_gen import (
 
 logger = logging.getLogger(__name__)
 
+# Mensagem genérica devolvida ao cliente em falhas de LLM (o detalhe do erro fica
+# só no log do servidor — não expomos stack traces / internals na resposta).
+_GEN_ERR = "No fue posible generar el contenido en este momento. Intente nuevamente."
+
 
 def obo_token(request: Request) -> None:
     """Captura o token do usuário (Databricks Apps OBO) para este request, de
@@ -56,8 +60,8 @@ async def generate(req: GenerateRequest, request: Request,
             topics=req.topics, difficulty=req.difficulty,
         )
     except Exception as e:
-        logger.error(f"Erro na geração: {e}")
-        return GenerateResponse(success=False, source="error", message=str(e))
+        logger.error(f"Erro na geração: {e}", exc_info=True)
+        return GenerateResponse(success=False, source="error", message=_GEN_ERR)
 
     if req.persist and questions:
         try:
@@ -87,8 +91,8 @@ async def repair(req: RepairRequest,
     try:
         raw = repair_wrong_answers(cert, [w.model_dump() for w in req.wrong])
     except Exception as e:
-        logger.error(f"Erro no repair: {e}")
-        return RepairResponse(success=False, source="error", message=str(e))
+        logger.error(f"Erro no repair: {e}", exc_info=True)
+        return RepairResponse(success=False, source="error", message=_GEN_ERR)
     items = [RepairItem(**{k: v for k, v in it.items() if k in RepairItem.model_fields})
              for it in raw]
     if req.session_id and items:
@@ -113,8 +117,8 @@ async def deep_dive(req: DeepDiveRequest,
     try:
         d = deep_dive_objective(cert, req.objective.strip())
     except Exception as e:
-        logger.error(f"Erro no deep-dive: {e}")
-        return DeepDiveResponse(success=False, source="error", message=str(e))
+        logger.error(f"Erro no deep-dive: {e}", exc_info=True)
+        return DeepDiveResponse(success=False, source="error", message=_GEN_ERR)
     d = {k: v for k, v in (d or {}).items() if k in DeepDiveResponse.model_fields}
     return DeepDiveResponse(success=True, source=_source(), **d)
 
@@ -129,9 +133,9 @@ async def hands_on(certification_id: str,
     try:
         raw = hands_on_checklist(cert)
     except Exception as e:
-        logger.error(f"Erro no hands-on: {e}")
+        logger.error(f"Erro no hands-on: {e}", exc_info=True)
         return HandsOnResponse(success=False, certification_id=certification_id,
-                               source="error", message=str(e))
+                               source="error", message=_GEN_ERR)
     tasks = [HandsOnTask(**{k: v for k, v in t.items() if k in HandsOnTask.model_fields})
              for t in raw if t.get("task")]
     return HandsOnResponse(success=True, certification_id=certification_id,

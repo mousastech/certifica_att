@@ -1,5 +1,5 @@
 """
-Santander Certifica — Configurações da aplicação.
+AT&T Certifica — Configurações da aplicação.
 """
 from functools import lru_cache
 from typing import List, Optional
@@ -19,7 +19,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [o.strip() for o in self.CORS_ORIGINS.split(",")]
+        # Só origens literais. Padrões com curinga (ex.: *.databricksapps.com) NÃO
+        # são casados pelo CORSMiddleware como string — vão pelo cors_origin_regex.
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip() and "*" not in o]
+
+    @property
+    def cors_origin_regex(self) -> str:
+        # Databricks Apps servem num subdomínio dinâmico *.databricksapps.com; um
+        # regex cobre qualquer host desse domínio (o CORSMiddleware exige regex p/ isso).
+        return r"https://[a-z0-9-]+\.databricksapps\.com"
 
     # ── Databricks (injetado automaticamente em Databricks Apps) ──────────────
     DATABRICKS_HOST: str = ""
